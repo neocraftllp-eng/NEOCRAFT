@@ -1,14 +1,14 @@
-// Production Customer Authentication & Official Google Identity Services (GSI) Engine
+// Production Customer Authentication & Official Google OAuth 2.0 / Identity Services Engine
 
 const USER_STORAGE_KEY = 'neocraft_active_customer';
 const USERS_DB_KEY = 'neocraft_registered_customers';
 const SAVED_DESIGNS_KEY = 'neocraft_user_saved_designs';
 
-// Standard Google OAuth 2.0 Web Client ID
-export const GOOGLE_CLIENT_ID = '1084291849182-neocraftxstudio.apps.googleusercontent.com';
+// Official Live Google OAuth 2.0 Web Client ID
+export const GOOGLE_CLIENT_ID = '1030893698897-o37fia9pfnahmmavqsre1lb16oi08cgb.apps.googleusercontent.com';
 
 /**
- * Decode Real Google Identity Services JWT Credential Token
+ * Decode Google Identity Services JWT Credential Token
  */
 export function decodeGoogleJwt(token) {
   try {
@@ -30,7 +30,7 @@ export function decodeGoogleJwt(token) {
 /**
  * Initialize Official Google Identity Services SDK
  */
-export function initGoogleIdentityServices(onSuccessCallback, containerId = 'google-signin-btn') {
+export function initGoogleIdentityServices(onSuccessCallback, containerId = 'google-signin-btn-container') {
   if (typeof window === 'undefined') return;
 
   const tryInit = () => {
@@ -57,7 +57,7 @@ export function initGoogleIdentityServices(onSuccessCallback, containerId = 'goo
           cancel_on_tap_outside: true
         });
 
-        // Render official button if container exists
+        // Render official Google button if container exists
         const container = document.getElementById(containerId);
         if (container) {
           container.innerHTML = '';
@@ -83,41 +83,61 @@ export function initGoogleIdentityServices(onSuccessCallback, containerId = 'goo
 }
 
 /**
- * Trigger Real Google OAuth 2.0 Web Popup
+ * Trigger Real Google OAuth 2.0 Web Popup using Google Token Client
  */
-export function triggerGoogleOAuthPopup(onSuccessCallback) {
-  // Try Google GSI Prompt First
-  if (window.google?.accounts?.id) {
-    window.google.accounts.id.prompt((notification) => {
-      if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-        openGoogleDirectPopup(onSuccessCallback);
-      }
-    });
-  } else {
-    openGoogleDirectPopup(onSuccessCallback);
-  }
-}
+export function triggerGoogleOAuthPopup(onSuccessCallback, onErrorCallback) {
+  try {
+    if (window.google?.accounts?.oauth2) {
+      const client = window.google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: 'https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email openid',
+        callback: async (tokenResponse) => {
+          if (tokenResponse && tokenResponse.access_token) {
+            try {
+              // Real Google UserInfo API request
+              const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                headers: {
+                  Authorization: `Bearer ${tokenResponse.access_token}`
+                }
+              });
+              const profile = await res.json();
+              if (profile && profile.email) {
+                const user = loginWithGoogleProfile({
+                  name: profile.name || profile.given_name || profile.email.split('@')[0],
+                  email: profile.email,
+                  avatar: profile.picture,
+                  googleId: profile.sub,
+                  emailVerified: profile.email_verified !== false
+                });
+                if (onSuccessCallback) onSuccessCallback(user);
+              }
+            } catch (fetchErr) {
+              console.error('Failed to fetch Google profile:', fetchErr);
+              if (onErrorCallback) onErrorCallback('Failed to retrieve profile from Google.');
+            }
+          } else if (tokenResponse?.error) {
+            console.error('Google OAuth error:', tokenResponse.error);
+            if (onErrorCallback) onErrorCallback(tokenResponse.error);
+          }
+        },
+        error_callback: (err) => {
+          console.error('Google Token Client Error:', err);
+          if (onErrorCallback) onErrorCallback(err.message || 'Google Sign-In was cancelled.');
+        }
+      });
 
-function openGoogleDirectPopup(onSuccessCallback) {
-  const width = 500;
-  const height = 600;
-  const left = window.screen.width / 2 - width / 2;
-  const top = window.screen.height / 2 - height / 2;
-
-  // Real Google Account Selection URL
-  const googleAuthUrl = `https://accounts.google.com/ServiceLogin?service=mail&continue=https://neocraftx.com/account`;
-  const popup = window.open(
-    googleAuthUrl,
-    'GoogleSignIn',
-    `toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=yes, resizable=no, copyhistory=no, width=${width}, height=${height}, top=${top}, left=${left}`
-  );
-
-  // Monitor popup close or completion
-  const checkPopup = setInterval(() => {
-    if (!popup || popup.closed) {
-      clearInterval(checkPopup);
+      client.requestAccessToken({ prompt: 'select_account' });
+      return;
     }
-  }, 1000);
+
+    // Fallback to GSI ID Prompt
+    if (window.google?.accounts?.id) {
+      window.google.accounts.id.prompt();
+    }
+  } catch (err) {
+    console.error('Trigger Google OAuth error:', err);
+    if (onErrorCallback) onErrorCallback('Google Sign-In initialization failed.');
+  }
 }
 
 export function getCurrentCustomer() {
@@ -141,7 +161,7 @@ export function loginCustomer(emailOrPhone, password = '') {
 
     if (user) {
       if (user.password && password && user.password !== password) {
-        return { success: false, error: 'Incorrect password. Please try again or use Google login.' };
+        return { success: false, error: 'Incorrect password. Please try again.' };
       }
       localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
       window.dispatchEvent(new Event('neocraft_auth_changed'));

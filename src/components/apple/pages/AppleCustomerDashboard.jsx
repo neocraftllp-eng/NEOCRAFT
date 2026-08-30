@@ -37,7 +37,8 @@ import {
   registerCustomer, 
   logoutCustomer, 
   getCustomerSavedDesigns,
-  initGoogleIdentityServices
+  initGoogleIdentityServices,
+  triggerGoogleOAuthPopup
 } from '../../../services/customerAuth';
 
 export default function AppleCustomerDashboard({
@@ -117,7 +118,20 @@ export default function AppleCustomerDashboard({
   const handleGoogleClick = () => {
     playClickSound();
     setAuthError('');
-    setShowGoogleModal(true);
+    triggerGoogleOAuthPopup(
+      (user) => {
+        if (user) {
+          playChimeSound();
+          setCustomer(user);
+          setShowGoogleModal(false);
+          confetti({ particleCount: 100, spread: 80 });
+        }
+      },
+      (errorMsg) => {
+        // If native popup closed or blocked, open fallback modal
+        setShowGoogleModal(true);
+      }
+    );
   };
 
   const handleGoogleSubmit = (e) => {

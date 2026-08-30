@@ -78,6 +78,11 @@ const SEO_MAP = {
     title: 'Studio Admin & Production Pipeline | NEOCRAFT X',
     description: 'Internal NEOCRAFT Studio Admin Portal for production management, Kanban order dispatch, and B2B trade approvals.',
     keywords: 'neocraft admin'
+  },
+  community: {
+    title: 'r/NEOCRAFT Community | Creators, Gaming Setups, Cafe Neon Reviews & Karma | NEOCRAFT X',
+    description: 'Join the r/NEOCRAFT illuminated creator community! Share your bedroom neon setups, cafe buildout photos, ask for typography design feedback, upvote setups, and earn Neon Karma rewards.',
+    keywords: 'neocraft community, reddit neocraft, neon room setup reddit, custom neon reviews, neon gaming battlestations'
   }
 };
 

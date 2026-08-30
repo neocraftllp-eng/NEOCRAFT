@@ -160,6 +160,17 @@ export default function AppleNavbar({
               Track Order
             </button>
             <button 
+              onClick={() => handleNav('community')} 
+              className={`transition-colors cursor-pointer flex items-center gap-1.5 px-2 py-0.5 rounded-full ${
+                currentPage === 'community' 
+                  ? 'bg-[#ff4500]/20 text-[#ff4500] font-bold border border-[#ff4500]/40' 
+                  : 'hover:text-[#ff4500]'
+              }`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-[#ff4500] animate-pulse" />
+              <span>r/Community</span>
+            </button>
+            <button 
               onClick={() => handleNav('weddings')} 
               className={`transition-colors cursor-pointer ${currentPage === 'weddings' ? 'text-pink-300 font-bold' : 'hover:text-white'}`}
             >
@@ -420,6 +431,10 @@ export default function AppleNavbar({
           </button>
           <button onClick={() => { setMobileMenuOpen(false); onOpenConsultation(); }} className="block w-full text-left py-2 text-purple-300 border-b border-[#222]">
             🗓️ Book 1-on-1 Virtual Consultation
+          </button>
+          <button onClick={() => { setMobileMenuOpen(false); handleNav('community'); }} className="block w-full text-left py-2 text-[#ff4500] border-b border-[#222] font-semibold flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-[#ff4500] animate-pulse" />
+            <span>🔥 r/NEOCRAFT Creators Community</span>
           </button>
           <button onClick={() => handleNav('admin')} className="block w-full text-left py-2 text-cyan-300 font-semibold">
             ⚡ Studio Admin & Production Pipeline

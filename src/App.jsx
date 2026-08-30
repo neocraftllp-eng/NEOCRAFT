@@ -50,6 +50,7 @@ import AppleContactPage from './components/apple/pages/AppleContactPage';
 import AppleRefundPolicyPage from './components/apple/pages/AppleRefundPolicyPage';
 import AppleTermsPage from './components/apple/pages/AppleTermsPage';
 import AppleAdminDashboard from './components/apple/pages/AppleAdminDashboard';
+import AppleRedditCommunityPage from './components/apple/pages/AppleRedditCommunityPage';
 import { updatePageSEO } from './utils/seo';
 
 import ReviewsSection from './components/salesEngines/ReviewsSection';
@@ -654,6 +655,17 @@ export default function App() {
           <div className="animate-in fade-in duration-300">
             <AppleAdminDashboard
               onNavigate={handleNavigate}
+            />
+          </div>
+        )}
+
+        {/* ================= PAGE: REDDIT-STYLE CREATORS COMMUNITY HUB ================= */}
+        {currentPage === 'community' && (
+          <div className="animate-in fade-in duration-300">
+            <AppleRedditCommunityPage
+              onNavigate={handleNavigate}
+              onAddToCart={handleAddToCart}
+              selectedCurrency={selectedCurrency}
             />
           </div>
         )}

@@ -99,7 +99,26 @@ export default function AppleCheckoutModal({
     const id = `NC-${Math.floor(10000 + Math.random() * 90000)}`;
     setOrderId(id);
 
-    // If Dodo Payments selected, create official checkout session
+    // Save real customer order into admin pipeline immediately
+    try {
+      const existing = JSON.parse(localStorage.getItem('neocraft_production_orders') || '[]');
+      const newOrder = {
+        id: id,
+        customer: form.name,
+        phone: form.phone,
+        email: form.email,
+        items: cartItems.map(i => `${i.name} (Qty: ${i.quantity || 1})`).join(', ') || 'Custom Neon Sign',
+        amount: `₹${finalTotal.toLocaleString('en-IN')}`,
+        status: 'new',
+        gateway: paymentGateway.toUpperCase(),
+        placedAt: 'Just Now',
+        tracking: `BD-${Math.floor(10000000 + Math.random() * 90000000)}IN`
+      };
+      localStorage.setItem('neocraft_production_orders', JSON.stringify([newOrder, ...existing]));
+      window.dispatchEvent(new Event('neocraft_orders_updated'));
+    } catch (err) {}
+
+    // If Dodo Payments selected, create official checkout session and redirect
     if (paymentGateway === 'dodo') {
       try {
         const dodoRes = await createDodoCheckoutSession({
@@ -107,48 +126,30 @@ export default function AppleCheckoutModal({
           amount: finalTotal,
           currency: selectedCurrency || 'INR',
           customer: form,
-          items: cartItems
+          items: cartItems,
+          returnUrl: `${window.location.origin}/account?orderId=${id}&status=success`
         });
-        if (dodoRes && dodoRes.checkoutUrl && !dodoRes.checkoutUrl.includes('buy/NC-')) {
-          // Open Dodo checkout in popup/new tab if configured
-          window.open(dodoRes.checkoutUrl, '_blank');
+        if (dodoRes && dodoRes.checkoutUrl) {
+          window.location.href = dodoRes.checkoutUrl;
+          return;
         }
       } catch (e) {
-        console.warn('Dodo session notice:', e);
+        console.warn('Dodo session error, using fallback:', e);
       }
     }
 
-    setTimeout(() => {
-      playChimeSound();
-      setStep('success');
+    // For UPI / Card / COD direct confirmation:
+    playChimeSound();
+    setStep('success');
 
-      // Save real customer order into admin pipeline
-      try {
-        const existing = JSON.parse(localStorage.getItem('neocraft_production_orders') || '[]');
-        const newOrder = {
-          id: id,
-          customer: form.name,
-          phone: form.phone,
-          items: cartItems.map(i => `${i.name} (Qty: ${i.quantity || 1})`).join(', ') || 'Custom Neon Sign',
-          amount: `₹${finalTotal.toLocaleString('en-IN')}`,
-          status: 'new',
-          gateway: paymentGateway.toUpperCase(),
-          placedAt: 'Just Now',
-          tracking: `BD-${Math.floor(10000000 + Math.random() * 90000000)}IN`
-        };
-        localStorage.setItem('neocraft_production_orders', JSON.stringify([newOrder, ...existing]));
-        window.dispatchEvent(new Event('neocraft_orders_updated'));
-      } catch (err) {}
+    confetti({
+      particleCount: 150,
+      spread: 80,
+      origin: { y: 0.5 },
+      colors: ['#0071e3', '#2997ff', '#10b981', '#ffffff']
+    });
 
-      confetti({
-        particleCount: 150,
-        spread: 80,
-        origin: { y: 0.5 },
-        colors: ['#0071e3', '#2997ff', '#10b981', '#ffffff']
-      });
-
-      if (onClearCart) onClearCart();
-    }, 1500);
+    if (onClearCart) onClearCart();
   };
 
   const handleWhatsAppReceipt = () => {

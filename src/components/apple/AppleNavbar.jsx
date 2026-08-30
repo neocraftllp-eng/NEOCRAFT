@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ShoppingBag, 
   Menu, 
@@ -18,10 +18,12 @@ import {
   Music,
   Leaf,
   Sun,
-  Moon
+  Moon,
+  User
 } from 'lucide-react';
 import { playClickSound, playSwitchSound } from '../../audio/soundEffects';
 import { CURRENCIES } from '../../utils/pricing';
+import { getCurrentCustomer } from '../../services/customerAuth';
 
 export default function AppleNavbar({
   currentPage = 'home',
@@ -58,6 +60,15 @@ export default function AppleNavbar({
   onNavigate
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [customer, setCustomer] = useState(getCurrentCustomer);
+
+  useEffect(() => {
+    const handleAuthSync = () => {
+      setCustomer(getCurrentCustomer());
+    };
+    window.addEventListener('neocraft_auth_changed', handleAuthSync);
+    return () => window.removeEventListener('neocraft_auth_changed', handleAuthSync);
+  }, []);
 
   const handleNav = (pageId) => {
     playClickSound();
@@ -253,6 +264,22 @@ export default function AppleNavbar({
               )}
             </button>
 
+            {/* VIP Member Account Button */}
+            <button
+              onClick={() => handleNav(customer ? 'account' : 'login')}
+              title={customer ? `VIP Dashboard (${customer.name})` : 'VIP Member Sign In'}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold cursor-pointer transition-all ${
+                customer 
+                  ? 'bg-[#2997ff]/20 text-[#2997ff] border border-[#2997ff]/40 shadow-sm' 
+                  : 'text-[#a1a1a6] hover:text-white hover:bg-white/10'
+              }`}
+            >
+              <User className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline text-[11px]">
+                {customer ? (customer.name.split(' ')[0] || 'VIP') : 'Sign In'}
+              </span>
+            </button>
+
             {/* Mobile Hamburger Menu Trigger */}
             <button
               onClick={() => { playClickSound(); setMobileMenuOpen(!mobileMenuOpen); }}
@@ -355,6 +382,19 @@ export default function AppleNavbar({
               <span>{theme === 'dark' ? 'Switch to Light Mode ☀️' : 'Switch to Dark Mode 🌙'}</span>
             </button>
           </div>
+
+          <button 
+            onClick={() => handleNav(customer ? 'account' : 'login')} 
+            className="block w-full text-left py-2.5 text-[#2997ff] border-b border-[#222] font-semibold flex items-center justify-between"
+          >
+            <span className="flex items-center gap-2">
+              <User className="w-4 h-4" />
+              <span>{customer ? `VIP Account (${customer.name})` : 'VIP Member Sign In / Register'}</span>
+            </span>
+            <span className="text-[10px] bg-[#0071e3] text-white px-2 py-0.5 rounded-full font-mono">
+              {customer ? 'Dashboard ➔' : '10% Off'}
+            </span>
+          </button>
 
           <button onClick={() => handleNav('home')} className="block w-full text-left py-2 text-white border-b border-[#222]">
             🏠 Store Overview

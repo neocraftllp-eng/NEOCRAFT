@@ -83,6 +83,16 @@ const SEO_MAP = {
     title: 'r/NEOCRAFT Community | Creators, Gaming Setups, Cafe Neon Reviews & Karma | NEOCRAFT X',
     description: 'Join the r/NEOCRAFT illuminated creator community! Share your bedroom neon setups, cafe buildout photos, ask for typography design feedback, upvote setups, and earn Neon Karma rewards.',
     keywords: 'neocraft community, reddit neocraft, neon room setup reddit, custom neon reviews, neon gaming battlestations'
+  },
+  account: {
+    title: 'VIP Customer Dashboard & Saved Custom Designs | NEOCRAFT X',
+    description: 'Manage your NEOCRAFT VIP account, track live fabrication, access saved vector drafts from Studio 2.0, and redeem collector loyalty Karma rewards.',
+    keywords: 'neocraft account, customer dashboard, saved neon designs, neon order history'
+  },
+  login: {
+    title: 'Sign In to NEOCRAFT VIP Account | 100 Welcome Karma | NEOCRAFT X',
+    description: 'Sign in to your NEOCRAFT VIP member account for 1-click express checkout, saved custom neon drafts, and instant loyalty rebates.',
+    keywords: 'neocraft login, sign in, customer portal'
   }
 };
 

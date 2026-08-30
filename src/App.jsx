@@ -51,6 +51,7 @@ import AppleRefundPolicyPage from './components/apple/pages/AppleRefundPolicyPag
 import AppleTermsPage from './components/apple/pages/AppleTermsPage';
 import AppleAdminDashboard from './components/apple/pages/AppleAdminDashboard';
 import AppleRedditCommunityPage from './components/apple/pages/AppleRedditCommunityPage';
+import AppleCustomerDashboard from './components/apple/pages/AppleCustomerDashboard';
 import { updatePageSEO } from './utils/seo';
 
 import ReviewsSection from './components/salesEngines/ReviewsSection';
@@ -688,6 +689,17 @@ export default function App() {
         {currentPage === 'community' && (
           <div className="animate-in fade-in duration-300">
             <AppleRedditCommunityPage
+              onNavigate={handleNavigate}
+              onAddToCart={handleAddToCart}
+              selectedCurrency={selectedCurrency}
+            />
+          </div>
+        )}
+
+        {/* ================= PAGE: CUSTOMER VIP ACCOUNT, LOGIN & DASHBOARD ================= */}
+        {(currentPage === 'account' || currentPage === 'login' || currentPage === 'dashboard') && (
+          <div className="animate-in fade-in duration-300">
+            <AppleCustomerDashboard
               onNavigate={handleNavigate}
               onAddToCart={handleAddToCart}
               selectedCurrency={selectedCurrency}

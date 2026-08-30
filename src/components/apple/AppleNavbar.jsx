@@ -16,7 +16,9 @@ import {
   RefreshCw,
   Palette,
   Music,
-  Leaf
+  Leaf,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { playClickSound, playSwitchSound } from '../../audio/soundEffects';
 import { CURRENCIES } from '../../utils/pricing';
@@ -24,6 +26,8 @@ import { CURRENCIES } from '../../utils/pricing';
 export default function AppleNavbar({
   currentPage = 'home',
   cartCount = 0,
+  theme = 'dark',
+  onToggleTheme,
   onOpenCart,
   onOpenStudio,
   onOpenVisualizer,
@@ -209,6 +213,20 @@ export default function AppleNavbar({
               <span className="absolute right-0 top-0.5 text-[8px] text-[#86868b] pointer-events-none">▼</span>
             </div>
 
+            {/* Dark / Light Mode Toggle */}
+            <button
+              onClick={onToggleTheme}
+              title={theme === 'dark' ? 'Switch to Light Mode ☀️' : 'Switch to Dark Mode 🌙'}
+              className="p-1 rounded-full hover:bg-white/10 text-[#a1a1a6] hover:text-white transition-all cursor-pointer flex items-center justify-center"
+              aria-label="Toggle Dark and Light Mode"
+            >
+              {theme === 'dark' ? (
+                <Sun className="w-4 h-4 text-amber-300 hover:rotate-45 transition-transform" />
+              ) : (
+                <Moon className="w-4 h-4 text-[#0071e3] hover:-rotate-12 transition-transform" />
+              )}
+            </button>
+
             {/* Sound Toggle */}
             <button
               onClick={() => {
@@ -327,6 +345,17 @@ export default function AppleNavbar({
       {/* 4. Mobile Drawer Menu */}
       {mobileMenuOpen && (
         <div className="md:hidden bg-[#000000]/98 backdrop-blur-2xl border-b border-[#2d2d2f] px-6 py-6 space-y-3.5 text-sm font-medium animate-in slide-in-from-top-4 duration-200">
+          <div className="flex items-center justify-between py-2 border-b border-[#222]">
+            <span className="text-[#86868b] text-xs">Interface Theme:</span>
+            <button
+              onClick={() => { onToggleTheme(); setMobileMenuOpen(false); }}
+              className="px-3 py-1 rounded-full bg-white/10 text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+            >
+              {theme === 'dark' ? <Sun className="w-3.5 h-3.5 text-amber-300" /> : <Moon className="w-3.5 h-3.5 text-[#0071e3]" />}
+              <span>{theme === 'dark' ? 'Switch to Light Mode ☀️' : 'Switch to Dark Mode 🌙'}</span>
+            </button>
+          </div>
+
           <button onClick={() => handleNav('home')} className="block w-full text-left py-2 text-white border-b border-[#222]">
             🏠 Store Overview
           </button>

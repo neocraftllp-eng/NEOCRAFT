@@ -8,12 +8,24 @@
     color-scheme: dark;
   }
 
+  :root.light {
+    color-scheme: light;
+  }
+
   body {
     background-color: #000000;
     color: #f5f5f7;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "Plus Jakarta Sans", sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  .light body,
+  body.light,
+  html.light body {
+    background-color: #f8f8fa !important;
+    color: #1d1d1f !important;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -27,14 +39,25 @@
   color: #f5f5f7;
   letter-spacing: -0.035em;
 }
+.light .apple-text-headline {
+  color: #1d1d1f !important;
+}
 
 .apple-text-subheadline {
   color: #86868b;
   letter-spacing: -0.015em;
 }
+.light .apple-text-subheadline {
+  color: #6e6e73 !important;
+}
 
 .apple-text-gradient-titanium {
   background: linear-gradient(180deg, #ffffff 0%, #a1a1a6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.light .apple-text-gradient-titanium {
+  background: linear-gradient(180deg, #1d1d1f 0%, #6e6e73 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -80,6 +103,11 @@
   align-items: center;
   justify-content: center;
 }
+.light .apple-btn-secondary {
+  background-color: rgba(0, 113, 227, 0.08) !important;
+  color: #0071e3 !important;
+  border-color: rgba(0, 113, 227, 0.3) !important;
+}
 .apple-btn-secondary:hover {
   background-color: rgba(41, 151, 255, 0.15);
   border-color: #2997ff;
@@ -106,6 +134,11 @@
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+.light .apple-nav-blur {
+  background-color: rgba(255, 255, 255, 0.86) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
 }
 
 .apple-ribbon-blur {
@@ -113,6 +146,11 @@
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+.light .apple-ribbon-blur {
+  background-color: rgba(245, 245, 247, 0.88) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
 }
 
 /* Apple Bento Cards */
@@ -122,9 +160,18 @@
   border: 1px solid rgba(255, 255, 255, 0.06);
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
+.light .apple-card {
+  background-color: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04) !important;
+}
 .apple-card:hover {
   border-color: rgba(255, 255, 255, 0.15);
   transform: translateY(-2px);
+}
+.light .apple-card:hover {
+  border-color: rgba(0, 0, 0, 0.15) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
 }
 
 .apple-card-elevated {
@@ -132,6 +179,56 @@
   border-radius: 28px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+}
+.light .apple-card-elevated {
+  background: linear-gradient(180deg, #ffffff 0%, #f0f0f2 100%) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Global Light Mode Overrides for Dark Containers */
+.light .bg-\[\#000000\],
+.light .bg-black {
+  background-color: #f8f8fa !important;
+}
+.light .bg-\[\#070709\],
+.light .bg-\[\#0e0e12\],
+.light .bg-\[\#0f0f15\],
+.light .bg-\[\#121214\],
+.light .bg-\[\#111113\],
+.light .bg-\[\#161617\],
+.light .bg-\[\#18181b\],
+.light .bg-\[\#17171d\],
+.light .bg-\[\#1c1c1e\],
+.light .bg-\[\#1f1f24\] {
+  background-color: #ffffff !important;
+}
+
+.light .border-\[\#222225\],
+.light .border-\[\#222226\],
+.light .border-\[\#262629\],
+.light .border-\[\#26262a\],
+.light .border-\[\#2d2d30\],
+.light .border-\[\#282830\],
+.light .border-\[\#2a2a30\],
+.light .border-\[\#333\],
+.light .border-white\/10,
+.light .border-white\/20 {
+  border-color: #e5e5ea !important;
+}
+
+.light .text-white,
+.light .text-slate-100,
+.light .text-slate-200,
+.light .text-slate-300 {
+  color: #1d1d1f !important;
+}
+
+.light .text-\[\#86868b\],
+.light .text-\[\#a1a1a6\],
+.light .text-\[\#d1d1d6\],
+.light .text-\[\#d2d2d7\] {
+  color: #6e6e73 !important;
 }
 
 /* Neon Physics Glow Engine */
@@ -164,10 +261,19 @@
 ::-webkit-scrollbar-track {
   background: #000000;
 }
+.light ::-webkit-scrollbar-track {
+  background: #f5f5f7;
+}
 ::-webkit-scrollbar-thumb {
   background: #2c2c2e;
   border-radius: 3px;
 }
+.light ::-webkit-scrollbar-thumb {
+  background: #c7c7cc;
+}
 ::-webkit-scrollbar-thumb:hover {
   background: #48484a;
+}
+.light ::-webkit-scrollbar-thumb:hover {
+  background: #aeaeb2;
 }

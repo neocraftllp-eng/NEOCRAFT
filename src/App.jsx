@@ -180,6 +180,29 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Global Theme Mode (Dark / Light)
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('neocraft_theme') || 'dark';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('neocraft_theme', theme);
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
+    } else {
+      document.documentElement.classList.add('light');
+      document.documentElement.classList.remove('dark');
+    }
+  }, [theme]);
+
+  const handleToggleTheme = () => {
+    try {
+      playClickSound();
+    } catch (e) {}
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  };
+
   const handleOpenARWithParams = (text = 'Dream In Neon', color = '#00F0FF') => {
     setArText(text);
     setArColor(color);
@@ -189,12 +212,14 @@ export default function App() {
   const totalBagCount = cartItems.reduce((acc, item) => acc + (item.quantity || 1), 0);
 
   return (
-    <div className="min-h-screen bg-[#000000] text-[#f5f5f7] selection:bg-[#0071e3] selection:text-white flex flex-col justify-between">
+    <div className={`min-h-screen ${theme === 'dark' ? 'bg-[#000000] text-[#f5f5f7]' : 'bg-[#f8f8fa] text-[#1d1d1f]'} selection:bg-[#0071e3] selection:text-white flex flex-col justify-between transition-colors duration-300`}>
       
       {/* 1. Apple Global Frosted Navigation & Sub-Nav Ribbon */}
       <AppleNavbar
         currentPage={currentPage}
         cartCount={totalBagCount}
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
         onOpenCart={() => setIsBagOpen(true)}
         onOpenStudio={() => handleNavigate('custom-studio')}
         onOpenVisualizer={() => handleOpenARWithParams()}

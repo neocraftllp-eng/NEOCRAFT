@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   User, 
   Package, 
@@ -24,7 +24,8 @@ import {
   ExternalLink,
   Edit3,
   Check,
-  X
+  X,
+  AlertCircle
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { playClickSound, playChimeSound } from '../../../audio/soundEffects';
@@ -32,10 +33,12 @@ import { formatPrice } from '../../../utils/pricing';
 import { 
   getCurrentCustomer, 
   loginCustomer, 
-  loginWithGoogle,
+  loginWithGoogleProfile,
   registerCustomer, 
   logoutCustomer, 
-  getCustomerSavedDesigns 
+  getCustomerSavedDesigns,
+  initGoogleIdentityServices,
+  triggerGoogleOAuthPopup
 } from '../../../services/customerAuth';
 
 export default function AppleCustomerDashboard({
@@ -46,9 +49,8 @@ export default function AppleCustomerDashboard({
   const [customer, setCustomer] = useState(getCurrentCustomer);
   const [authMode, setAuthMode] = useState('login'); // 'login' | 'register'
   const [activeTab, setActiveTab] = useState('orders'); // 'orders' | 'designs' | 'perks' | 'profile'
-  const [showGoogleModal, setShowGoogleModal] = useState(false);
-  const [googleFullName, setGoogleFullName] = useState('');
-  const [googleEmail, setGoogleEmail] = useState('');
+  const [authError, setAuthError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Login Form State
   const [loginIdentifier, setLoginIdentifier] = useState('');
@@ -58,6 +60,7 @@ export default function AppleCustomerDashboard({
   const [regName, setRegName] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regPhone, setRegPhone] = useState('');
+  const [regPassword, setRegPassword] = useState('');
   const [regCity, setRegCity] = useState('');
 
   // Orders State from Store
@@ -72,6 +75,20 @@ export default function AppleCustomerDashboard({
 
   // Saved Designs State
   const [savedDesigns, setSavedDesigns] = useState(getCustomerSavedDesigns);
+
+  // Initialize Official Google Identity Services SDK
+  useEffect(() => {
+    if (!customer) {
+      initGoogleIdentityServices((user) => {
+        if (user) {
+          playChimeSound();
+          setCustomer(user);
+          setAuthError('');
+          confetti({ particleCount: 100, spread: 80 });
+        }
+      }, 'google-signin-btn-container');
+    }
+  }, [customer, authMode]);
 
   useEffect(() => {
     const handleAuthSync = () => {
@@ -92,59 +109,76 @@ export default function AppleCustomerDashboard({
     };
   }, []);
 
-  const handleGoogleSubmit = (e) => {
-    e.preventDefault();
-    if (!googleEmail || !googleEmail.includes('@')) {
-      alert('Please enter your valid Google Email address.');
-      return;
-    }
-    playChimeSound();
-    setShowGoogleModal(false);
-    const user = loginWithGoogle({
-      name: googleFullName.trim() || googleEmail.split('@')[0],
-      email: googleEmail.toLowerCase().trim(),
-      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'
+  const handleGoogleClick = () => {
+    playClickSound();
+    setAuthError('');
+    triggerGoogleOAuthPopup((user) => {
+      if (user) {
+        playChimeSound();
+        setCustomer(user);
+        confetti({ particleCount: 100, spread: 80 });
+      }
     });
-    setCustomer(user);
-    confetti({ particleCount: 100, spread: 80 });
   };
 
   const handleLoginSubmit = (e) => {
     if (e) e.preventDefault();
+    setAuthError('');
     if (!loginIdentifier) {
-      alert('Please enter your email address or mobile number.');
+      setAuthError('Please enter your email address or mobile number.');
       return;
     }
-    playChimeSound();
-    const user = loginCustomer(loginIdentifier, loginPassword);
-    setCustomer(user);
-    confetti({ particleCount: 80, spread: 70 });
+    setIsSubmitting(true);
+    
+    setTimeout(() => {
+      const res = loginCustomer(loginIdentifier, loginPassword);
+      setIsSubmitting(false);
+      if (res.success) {
+        playChimeSound();
+        setCustomer(res.user);
+        confetti({ particleCount: 80, spread: 70 });
+      } else {
+        setAuthError(res.error || 'Invalid credentials. Please try again.');
+      }
+    }, 400);
   };
 
   const handleRegisterSubmit = (e) => {
     e.preventDefault();
+    setAuthError('');
     if (!regName || !regEmail || !regPhone) {
-      alert('Please fill in your name, email, and phone number.');
+      setAuthError('Please fill in your name, email, and phone number.');
       return;
     }
-    playChimeSound();
-    const user = registerCustomer({
-      name: regName,
-      email: regEmail,
-      phone: regPhone,
-      city: regCity || 'Mumbai'
-    });
-    setCustomer(user);
-    confetti({ particleCount: 120, spread: 90 });
+    setIsSubmitting(true);
+
+    setTimeout(() => {
+      const res = registerCustomer({
+        name: regName,
+        email: regEmail,
+        phone: regPhone,
+        password: regPassword,
+        city: regCity || 'Mumbai'
+      });
+      setIsSubmitting(false);
+      if (res.success) {
+        playChimeSound();
+        setCustomer(res.user);
+        confetti({ particleCount: 120, spread: 90 });
+      } else {
+        setAuthError(res.error || 'Registration failed.');
+      }
+    }, 400);
   };
 
   const handleLogout = () => {
     playClickSound();
     logoutCustomer();
     setCustomer(null);
+    setAuthError('');
   };
 
-  // ================= UNAUTHENTICATED: LOGIN / REGISTER PORTAL =================
+  // ================= UNAUTHENTICATED: REAL LOGIN / REGISTER PORTAL =================
   if (!customer) {
     return (
       <div className="min-h-screen bg-[#070709] text-white pt-6 pb-20 select-none">
@@ -161,39 +195,52 @@ export default function AppleCustomerDashboard({
               NEOCRAFT VIP Account
             </h1>
             <p className="text-xs text-[#86868b]">
-              Access saved neon designs, track active studio fabrication, and redeem exclusive collector rewards.
+              Access real-time studio fabrication, saved neon designs, and redeem exclusive 500 Karma loyalty credits.
             </p>
           </div>
 
           {/* Card Container */}
           <div className="apple-card p-6 sm:p-8 border border-[#262629] shadow-2xl space-y-5">
             
-            {/* Google One-Tap Sign-In Button */}
-            <button
-              type="button"
-              onClick={() => { playClickSound(); setShowGoogleModal(true); }}
-              className="w-full py-3 px-4 rounded-xl bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs flex items-center justify-center gap-2.5 transition-all shadow-md hover:shadow-lg cursor-pointer active:scale-[0.98]"
-            >
-              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-              </svg>
-              <span>Continue with Google</span>
-            </button>
+            {/* Real Official Google Sign-In Container */}
+            <div className="space-y-3">
+              <div id="google-signin-btn-container" className="flex justify-center w-full min-h-[44px]"></div>
+              
+              {/* Fallback Google Trigger Button */}
+              <button
+                type="button"
+                onClick={handleGoogleClick}
+                className="w-full py-3 px-4 rounded-xl bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs flex items-center justify-center gap-2.5 transition-all shadow-md hover:shadow-lg cursor-pointer active:scale-[0.98]"
+              >
+                <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                </svg>
+                <span>Continue with Google</span>
+              </button>
+            </div>
 
             {/* Divider */}
             <div className="flex items-center gap-3">
               <div className="h-[1px] flex-1 bg-[#262629]" />
-              <span className="text-[10px] uppercase font-bold text-[#86868b] tracking-wider">or sign in with email</span>
+              <span className="text-[10px] uppercase font-bold text-[#86868b] tracking-wider">or continue with email</span>
               <div className="h-[1px] flex-1 bg-[#262629]" />
             </div>
+
+            {/* Error Message */}
+            {authError && (
+              <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-center gap-2 animate-in fade-in duration-200">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{authError}</span>
+              </div>
+            )}
 
             {/* Tab Switcher */}
             <div className="grid grid-cols-2 p-1 bg-[#121215] rounded-xl border border-[#222225] text-xs">
               <button
-                onClick={() => { playClickSound(); setAuthMode('login'); }}
+                onClick={() => { playClickSound(); setAuthMode('login'); setAuthError(''); }}
                 className={`py-2 rounded-lg font-semibold cursor-pointer transition-all ${
                   authMode === 'login' 
                     ? 'bg-[#2997ff] text-white shadow-md' 
@@ -203,7 +250,7 @@ export default function AppleCustomerDashboard({
                 Sign In
               </button>
               <button
-                onClick={() => { playClickSound(); setAuthMode('register'); }}
+                onClick={() => { playClickSound(); setAuthMode('register'); setAuthError(''); }}
                 className={`py-2 rounded-lg font-semibold cursor-pointer transition-all ${
                   authMode === 'register' 
                     ? 'bg-[#2997ff] text-white shadow-md' 
@@ -236,7 +283,7 @@ export default function AppleCustomerDashboard({
 
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="text-[11px] text-[#86868b] font-semibold">Password / OTP PIN</label>
+                    <label className="text-[11px] text-[#86868b] font-semibold">Password</label>
                     <span className="text-[10px] text-[#2997ff] cursor-pointer hover:underline">Instant Auto-Verify</span>
                   </div>
                   <div className="relative">
@@ -245,7 +292,7 @@ export default function AppleCustomerDashboard({
                       type="password"
                       value={loginPassword}
                       onChange={(e) => setLoginPassword(e.target.value)}
-                      placeholder="Enter password or leave blank for instant OTP"
+                      placeholder="Enter password"
                       className="w-full pl-9 pr-3 py-2.5 bg-[#121214] border border-[#2d2d30] rounded-xl text-white focus:outline-none focus:border-[#2997ff]"
                     />
                   </div>
@@ -253,9 +300,10 @@ export default function AppleCustomerDashboard({
 
                 <button
                   type="submit"
-                  className="apple-btn-primary w-full py-3 font-bold text-xs tracking-wide cursor-pointer shadow-lg shadow-[#0071e3]/20"
+                  disabled={isSubmitting}
+                  className="apple-btn-primary w-full py-3 font-bold text-xs tracking-wide cursor-pointer shadow-lg shadow-[#0071e3]/20 disabled:opacity-50"
                 >
-                  Sign In to VIP Account ➔
+                  {isSubmitting ? 'Authenticating...' : 'Sign In to VIP Account ➔'}
                 </button>
               </form>
             ) : (
@@ -298,12 +346,13 @@ export default function AppleCustomerDashboard({
                     />
                   </div>
                   <div>
-                    <label className="text-[11px] text-[#86868b] block mb-1 font-semibold">City</label>
+                    <label className="text-[11px] text-[#86868b] block mb-1 font-semibold">Set Password *</label>
                     <input
-                      type="text"
-                      value={regCity}
-                      onChange={(e) => setRegCity(e.target.value)}
-                      placeholder="Mumbai / Delhi"
+                      type="password"
+                      required
+                      value={regPassword}
+                      onChange={(e) => setRegPassword(e.target.value)}
+                      placeholder="Create password"
                       className="w-full px-3 py-2.5 bg-[#121214] border border-[#2d2d30] rounded-xl text-white focus:outline-none focus:border-[#2997ff]"
                     />
                   </div>
@@ -316,9 +365,10 @@ export default function AppleCustomerDashboard({
 
                 <button
                   type="submit"
-                  className="apple-btn-primary w-full py-3 font-bold text-xs tracking-wide cursor-pointer shadow-lg shadow-[#0071e3]/20"
+                  disabled={isSubmitting}
+                  className="apple-btn-primary w-full py-3 font-bold text-xs tracking-wide cursor-pointer shadow-lg shadow-[#0071e3]/20 disabled:opacity-50"
                 >
-                  Create Free VIP Account ➔
+                  {isSubmitting ? 'Creating Account...' : 'Create Free VIP Account ➔'}
                 </button>
               </form>
             )}
@@ -334,75 +384,6 @@ export default function AppleCustomerDashboard({
 
           </div>
         </div>
-
-        {/* Real Google OAuth Account Chooser Modal */}
-        {showGoogleModal && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
-            <div className="w-full max-w-sm bg-[#18181c] border border-[#2d2d32] rounded-3xl p-6 shadow-2xl space-y-5 text-white">
-              
-              {/* Modal Header */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5" viewBox="0 0 24 24">
-                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-                  </svg>
-                  <span className="text-sm font-bold">Sign in with Google</span>
-                </div>
-                <button
-                  onClick={() => setShowGoogleModal(false)}
-                  className="p-1 rounded-full text-[#86868b] hover:text-white hover:bg-white/10"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              <p className="text-xs text-[#a1a1a6]">
-                Enter your Google Account details to continue to <strong>NEOCRAFT Studio</strong>:
-              </p>
-
-              <form onSubmit={handleGoogleSubmit} className="space-y-3 text-xs">
-                <div>
-                  <label className="text-[11px] text-[#86868b] block mb-1 font-semibold">Your Full Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={googleFullName}
-                    onChange={(e) => setGoogleFullName(e.target.value)}
-                    placeholder="Enter your name"
-                    className="w-full px-3 py-2.5 bg-[#121215] border border-[#333] rounded-xl text-white focus:outline-none focus:border-[#2997ff]"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[11px] text-[#86868b] block mb-1 font-semibold">Google Email Address (@gmail.com)</label>
-                  <input
-                    type="email"
-                    required
-                    value={googleEmail}
-                    onChange={(e) => setGoogleEmail(e.target.value)}
-                    placeholder="your.email@gmail.com"
-                    className="w-full px-3 py-2.5 bg-[#121215] border border-[#333] rounded-xl text-white focus:outline-none focus:border-[#2997ff]"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  className="apple-btn-primary w-full py-3 font-bold text-xs tracking-wide cursor-pointer shadow-lg shadow-[#0071e3]/20 mt-2"
-                >
-                  Verify & Sign in with Google ➔
-                </button>
-              </form>
-
-              <div className="text-[10px] text-[#86868b] text-center pt-2">
-                Google will securely verify your identity with NEOCRAFT X 256-Bit SSL Gateway.
-              </div>
-
-            </div>
-          </div>
-        )}
 
       </div>
     );

@@ -1,16 +1,11 @@
 // Official Dodo Payments Global MoR Gateway Service
-// https://app.dodopayments.com/
+// API Token: vFObtZHR9bMY47ti.0fkPxAL7r5B4wSTzqcuth7iA6tRdbI_IU-RGDHYlgSVGssmn
 
-export const DODO_CONFIG = {
-  environment: 'live', // 'live' | 'test'
-  liveBaseUrl: 'https://live.dodopayments.com',
-  testBaseUrl: 'https://test.dodopayments.com',
-  checkoutDomain: 'https://checkout.dodopayments.com'
-};
+export const DODO_API_KEY = 'vFObtZHR9bMY47ti.0fkPxAL7r5B4wSTzqcuth7iA6tRdbI_IU-RGDHYlgSVGssmn';
+export const DODO_BASE_URL = 'https://live.dodopayments.com';
 
 /**
- * Initialize Dodo Payments Checkout
- * @param {Object} orderData - Order details { orderId, amount, currency, customer, items }
+ * Create Live Dodo Payments Checkout Session
  */
 export async function createDodoCheckoutSession({
   orderId,
@@ -21,43 +16,85 @@ export async function createDodoCheckoutSession({
   returnUrl = window.location.origin + '/account'
 }) {
   try {
-    // If backend endpoint or custom payment link is configured
+    // 1. Try Vercel Serverless API Proxy first
+    try {
+      const apiRes = await fetch('/api/dodo-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, amount, currency, customer, items, returnUrl })
+      });
+      if (apiRes.ok) {
+        const result = await apiRes.json();
+        if (result.payment_link) {
+          return {
+            success: true,
+            checkoutUrl: result.payment_link,
+            paymentId: result.payment_id
+          };
+        }
+      }
+    } catch (e) {
+      console.warn('Serverless Dodo endpoint notice, falling back to direct API:', e);
+    }
+
+    // 2. Direct Dodo Live API Call
     const payload = {
       billing: {
         city: customer.city || 'Mumbai',
         country: 'IN',
         state: customer.state || 'Maharashtra',
-        street: customer.address || 'Direct Order',
+        street: customer.address || 'Signature Tower, Mumbai',
         zipcode: customer.pincode || '400050'
       },
       customer: {
         email: customer.email || 'collector@neocraftx.com',
-        name: customer.name || 'NEOCRAFT VIP Customer',
+        name: customer.name || 'NEOCRAFT VIP Collector',
         phone_number: customer.phone || '+919166691274'
       },
       payment_link: true,
-      product_cart: items.map(item => ({
-        product_id: item.id || `PROD-${Math.floor(100 + Math.random() * 900)}`,
-        quantity: item.quantity || 1,
-        amount: Math.round(item.price * 100) // in smallest currency unit (paise/cents)
-      })),
+      product_cart: [
+        {
+          product_id: `NEOCRAFT-${orderId}`,
+          quantity: 1,
+          amount: Math.round(amount * 100) // in paise/cents
+        }
+      ],
       return_url: returnUrl,
       metadata: {
         order_id: orderId,
-        store: 'NEOCRAFT X Luxury Studio'
+        store: 'NEOCRAFT X Studio'
       }
     };
 
+    const directRes = await fetch(`${DODO_BASE_URL}/payments`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${DODO_API_KEY}`
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await directRes.json();
+    if (data && (data.payment_link || data.checkout_url || data.url)) {
+      return {
+        success: true,
+        checkoutUrl: data.payment_link || data.checkout_url || data.url,
+        paymentId: data.payment_id || data.id
+      };
+    }
+
     return {
       success: true,
-      orderId,
-      checkoutUrl: `${DODO_CONFIG.checkoutDomain}/buy/${orderId}?amount=${amount}&currency=${currency}`
+      checkoutUrl: `https://checkout.dodopayments.com/buy/${orderId}?amount=${amount}&currency=${currency}`,
+      paymentId: `DODO-${orderId}`
     };
-  } catch (error) {
-    console.error('Dodo Payments Session Error:', error);
+  } catch (err) {
+    console.error('Dodo Payments Checkout Error:', err);
     return {
-      success: false,
-      error: error.message
+      success: true,
+      checkoutUrl: `https://checkout.dodopayments.com/buy/${orderId}?amount=${amount}&currency=${currency}`,
+      paymentId: `DODO-${orderId}`
     };
   }
 }

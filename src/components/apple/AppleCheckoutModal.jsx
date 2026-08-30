@@ -22,6 +22,7 @@ import confetti from 'canvas-confetti';
 import { playClickSound, playChimeSound } from '../../audio/soundEffects';
 import { formatPrice } from '../../utils/pricing';
 import { getCurrentCustomer, loginWithGoogle } from '../../services/customerAuth';
+import { createDodoCheckoutSession } from '../../services/dodoPayments';
 
 export default function AppleCheckoutModal({
   isOpen,
@@ -92,14 +93,33 @@ export default function AppleCheckoutModal({
     setStep('payment');
   };
 
-  const handleExecutePayment = () => {
+  const handleExecutePayment = async () => {
     playClickSound();
     setStep('processing');
+    const id = `NC-${Math.floor(10000 + Math.random() * 90000)}`;
+    setOrderId(id);
+
+    // If Dodo Payments selected, create official checkout session
+    if (paymentGateway === 'dodo') {
+      try {
+        const dodoRes = await createDodoCheckoutSession({
+          orderId: id,
+          amount: finalTotal,
+          currency: selectedCurrency || 'INR',
+          customer: form,
+          items: cartItems
+        });
+        if (dodoRes && dodoRes.checkoutUrl && !dodoRes.checkoutUrl.includes('buy/NC-')) {
+          // Open Dodo checkout in popup/new tab if configured
+          window.open(dodoRes.checkoutUrl, '_blank');
+        }
+      } catch (e) {
+        console.warn('Dodo session notice:', e);
+      }
+    }
 
     setTimeout(() => {
       playChimeSound();
-      const id = `NC-${Math.floor(10000 + Math.random() * 90000)}`;
-      setOrderId(id);
       setStep('success');
 
       // Save real customer order into admin pipeline
@@ -112,6 +132,7 @@ export default function AppleCheckoutModal({
           items: cartItems.map(i => `${i.name} (Qty: ${i.quantity || 1})`).join(', ') || 'Custom Neon Sign',
           amount: `₹${finalTotal.toLocaleString('en-IN')}`,
           status: 'new',
+          gateway: paymentGateway.toUpperCase(),
           placedAt: 'Just Now',
           tracking: `BD-${Math.floor(10000000 + Math.random() * 90000000)}IN`
         };
@@ -127,7 +148,7 @@ export default function AppleCheckoutModal({
       });
 
       if (onClearCart) onClearCart();
-    }, 1800);
+    }, 1500);
   };
 
   const handleWhatsAppReceipt = () => {

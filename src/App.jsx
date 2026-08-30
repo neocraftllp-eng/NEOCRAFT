@@ -130,24 +130,33 @@ export default function App() {
     setCartItems([]);
   };
 
-  // Navigation & Active Page Route
-  const [currentPage, setCurrentPage] = useState(() => {
+  // Clean HTML5 URL Routing (No Hash #)
+  const getInitialRoute = () => {
+    const path = window.location.pathname.replace(/^\/+|\/+$/g, '').trim();
+    if (path && path !== 'index.html') return path;
     const hash = window.location.hash.replace('#', '').trim();
-    return hash || 'home';
-  });
+    if (hash) return hash;
+    return 'home';
+  };
+
+  const [currentPage, setCurrentPage] = useState(getInitialRoute);
 
   useEffect(() => {
-    const onHashChange = () => {
+    const onLocationChange = () => {
+      const path = window.location.pathname.replace(/^\/+|\/+$/g, '').trim();
       const hash = window.location.hash.replace('#', '').trim();
-      if (hash) {
-        let target = hash;
-        if (target === 'hero' || target === 'overview' || target === 'comparison') target = 'home';
-        if (target === 'logo-estimator') target = 'business-signs';
-        setCurrentPage(target);
-      }
+      let target = path || hash || 'home';
+      if (target === 'hero' || target === 'overview' || target === 'comparison') target = 'home';
+      if (target === 'logo-estimator') target = 'business-signs';
+      setCurrentPage(target);
     };
-    window.addEventListener('hashchange', onHashChange);
-    return () => window.removeEventListener('hashchange', onHashChange);
+
+    window.addEventListener('popstate', onLocationChange);
+    window.addEventListener('hashchange', onLocationChange);
+    return () => {
+      window.removeEventListener('popstate', onLocationChange);
+      window.removeEventListener('hashchange', onLocationChange);
+    };
   }, []);
 
   useEffect(() => {
@@ -164,7 +173,8 @@ export default function App() {
     if (target === 'hero' || target === 'overview' || target === 'comparison') target = 'home';
     if (target === 'logo-estimator') target = 'business-signs';
     
-    window.location.hash = target === 'home' ? '' : target;
+    const cleanPath = target === 'home' ? '/' : `/${target}`;
+    window.history.pushState(null, '', cleanPath);
     setCurrentPage(target);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };

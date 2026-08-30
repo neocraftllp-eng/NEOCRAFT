@@ -111,14 +111,14 @@ export function updatePageSEO(pageId = 'home') {
 
   let ogUrl = document.querySelector('meta[property="og:url"]');
   if (ogUrl) {
-    const routeHash = pageId === 'home' ? '' : `#${pageId}`;
-    ogUrl.setAttribute('content', `https://neocraftx.com/${routeHash}`);
+    const cleanPath = pageId === 'home' ? '' : pageId;
+    ogUrl.setAttribute('content', `https://neocraftx.com/${cleanPath}`);
   }
 
   // 5. Update Canonical Link
   let canonical = document.querySelector('link[rel="canonical"]');
   if (canonical) {
-    const routeHash = pageId === 'home' ? '' : `#${pageId}`;
-    canonical.setAttribute('href', `https://neocraftx.com/${routeHash}`);
+    const cleanPath = pageId === 'home' ? '' : pageId;
+    canonical.setAttribute('href', `https://neocraftx.com/${cleanPath}`);
   }
 }

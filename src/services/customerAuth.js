@@ -35,8 +35,46 @@ export function loginCustomer(emailOrPhone, password = '') {
         phone: !emailOrPhone.includes('@') ? emailOrPhone.trim() : '+91 98201 55920',
         tier: 'Gold VIP Member',
         karma: 350,
+        authProvider: 'email',
         joinedAt: new Date().toLocaleDateString('en-IN', { month: 'short', year: 'numeric' }),
         avatar: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80`
+      };
+      users.push(user);
+      localStorage.setItem(USERS_DB_KEY, JSON.stringify(users));
+    }
+
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+    window.dispatchEvent(new Event('neocraft_auth_changed'));
+    return user;
+  } catch (e) {
+    return null;
+  }
+}
+
+export function loginWithGoogle(googleProfile = null) {
+  try {
+    const defaultProfile = {
+      name: 'Google Collector',
+      email: 'collector@gmail.com',
+      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'
+    };
+
+    const profile = googleProfile || defaultProfile;
+    const users = JSON.parse(localStorage.getItem(USERS_DB_KEY) || '[]');
+    let user = users.find(u => u.email && u.email.toLowerCase() === profile.email.toLowerCase().trim());
+
+    if (!user) {
+      user = {
+        id: `CUST-${Math.floor(1000 + Math.random() * 9000)}`,
+        name: profile.name || 'Google Collector',
+        email: profile.email.toLowerCase().trim(),
+        phone: '+91 98201 88492',
+        city: 'Mumbai',
+        tier: 'Gold VIP Member',
+        karma: 500, // 500 Welcome Bonus Karma Points
+        authProvider: 'google',
+        joinedAt: new Date().toLocaleDateString('en-IN', { month: 'short', year: 'numeric' }),
+        avatar: profile.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'
       };
       users.push(user);
       localStorage.setItem(USERS_DB_KEY, JSON.stringify(users));
@@ -61,6 +99,7 @@ export function registerCustomer({ name, email, phone, city = 'Mumbai' }) {
       city: city.trim(),
       tier: 'Gold VIP Member',
       karma: 500, // 500 Welcome Bonus Karma Points
+      authProvider: 'email',
       joinedAt: new Date().toLocaleDateString('en-IN', { month: 'short', year: 'numeric' }),
       avatar: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80`
     };

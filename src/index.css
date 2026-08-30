@@ -1,0 +1,173 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --neon-glow-intensity: 1;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "Plus Jakarta Sans", sans-serif;
+    letter-spacing: -0.015em;
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: #000000;
+    color: #f5f5f7;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "Plus Jakarta Sans", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    letter-spacing: -0.035em;
+    font-weight: 600;
+  }
+}
+
+/* Apple Colors & Typography Tokens */
+.apple-text-headline {
+  color: #f5f5f7;
+  letter-spacing: -0.035em;
+}
+
+.apple-text-subheadline {
+  color: #86868b;
+  letter-spacing: -0.015em;
+}
+
+.apple-text-gradient-titanium {
+  background: linear-gradient(180deg, #ffffff 0%, #a1a1a6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.apple-text-gradient-glow {
+  background: linear-gradient(90deg, #ff2d55 0%, #a855f7 50%, #00F0FF 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Apple Buttons */
+.apple-btn-primary {
+  background-color: #0071e3;
+  color: #ffffff;
+  border-radius: 980px;
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.apple-btn-primary:hover {
+  background-color: #0077ed;
+  transform: scale(1.02);
+}
+.apple-btn-primary:active {
+  background-color: #006edb;
+  transform: scale(0.98);
+}
+
+.apple-btn-secondary {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #2997ff;
+  border: 1px solid rgba(41, 151, 255, 0.4);
+  border-radius: 980px;
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.apple-btn-secondary:hover {
+  background-color: rgba(41, 151, 255, 0.15);
+  border-color: #2997ff;
+  color: #ffffff;
+}
+
+.apple-link {
+  color: #2997ff;
+  font-size: 14px;
+  font-weight: 400;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+.apple-link:hover {
+  text-decoration: underline;
+  color: #70b8ff;
+}
+
+/* Apple Frosted Glass Navigation */
+.apple-nav-blur {
+  background-color: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.apple-ribbon-blur {
+  background-color: rgba(18, 18, 19, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Apple Bento Cards */
+.apple-card {
+  background-color: #161617;
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.apple-card:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.apple-card-elevated {
+  background: linear-gradient(180deg, #1d1d1f 0%, #111112 100%);
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+}
+
+/* Neon Physics Glow Engine */
+.neon-tube-glow {
+  text-shadow: 
+    0 0 3px #ffffff,
+    0 0 8px currentColor,
+    0 0 18px currentColor,
+    0 0 36px currentColor,
+    0 0 70px currentColor;
+}
+
+.neon-tube-dim {
+  text-shadow: 
+    0 0 2px rgba(255, 255, 255, 0.6),
+    0 0 6px currentColor,
+    0 0 12px currentColor;
+}
+
+.neon-off {
+  color: rgba(255, 255, 255, 0.15) !important;
+  text-shadow: 0 0 1px rgba(0,0,0,0.8) !important;
+}
+
+/* Custom Sleek Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #000000;
+}
+::-webkit-scrollbar-thumb {
+  background: #2c2c2e;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #48484a;
+}

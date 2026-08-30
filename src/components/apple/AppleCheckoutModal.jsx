@@ -92,9 +92,26 @@ export default function AppleCheckoutModal({
 
     setTimeout(() => {
       playChimeSound();
-      const id = `APL-NCX-${Math.floor(100000 + Math.random() * 900000)}`;
+      const id = `NC-${Math.floor(10000 + Math.random() * 90000)}`;
       setOrderId(id);
       setStep('success');
+
+      // Save real customer order into admin pipeline
+      try {
+        const existing = JSON.parse(localStorage.getItem('neocraft_production_orders') || '[]');
+        const newOrder = {
+          id: id,
+          customer: form.name,
+          phone: form.phone,
+          items: cartItems.map(i => `${i.name} (Qty: ${i.quantity || 1})`).join(', ') || 'Custom Neon Sign',
+          amount: `₹${finalTotal.toLocaleString('en-IN')}`,
+          status: 'new',
+          placedAt: 'Just Now',
+          tracking: `BD-${Math.floor(10000000 + Math.random() * 90000000)}IN`
+        };
+        localStorage.setItem('neocraft_production_orders', JSON.stringify([newOrder, ...existing]));
+        window.dispatchEvent(new Event('neocraft_orders_updated'));
+      } catch (err) {}
 
       confetti({
         particleCount: 150,

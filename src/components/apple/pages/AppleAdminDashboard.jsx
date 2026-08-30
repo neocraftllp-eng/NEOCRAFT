@@ -39,77 +39,24 @@ import {
   getLastAIBotRunTime 
 } from '../../../services/communityStorage';
 
-const INITIAL_ORDERS = [
-  {
-    id: 'NC-98421',
-    customer: 'Aarav Singhania',
-    phone: '+91 98201 44821',
-    items: 'Custom Neon ("NEVER SETTLE", Cyber Cyan, 90cm)',
-    amount: '₹7,999',
-    status: 'burn-in', // 'new' | 'milling' | 'wiring' | 'burn-in' | 'dispatched'
-    placedAt: 'Today, 2:15 PM',
-    tracking: 'BD-88491023IN'
-  },
-  {
-    id: 'NC-98420',
-    customer: 'Priya Mehta (Studio Luxe Interiors)',
-    phone: '+91 98112 39910',
-    items: '3-Piece Triptych Canvas ("Seven Running Horses", 60×30")',
-    amount: '₹8,999',
-    status: 'wiring',
-    placedAt: 'Today, 11:30 AM',
-    tracking: 'BD-88491022IN'
-  },
-  {
-    id: 'NC-98419',
-    customer: 'Rohit Varma (Club Omnia VIP)',
-    phone: '+91 99200 11982',
-    items: '2× Aurora Diamond VIP Bottle Presenters (Strobe Edition)',
-    amount: '₹37,998',
-    status: 'dispatched',
-    placedAt: 'Yesterday, 8:45 PM',
-    tracking: 'BD-88491019IN'
-  },
-  {
-    id: 'NC-98418',
-    customer: 'Dr. Ananya Roy',
-    phone: '+91 97300 88219',
-    items: '3D Gold Acrylic Clinic Logo ("AURA DENTAL CLINIC", 120cm)',
-    amount: '₹14,499',
-    status: 'milling',
-    placedAt: 'Yesterday, 4:20 PM',
-    tracking: 'BD-88491018IN'
-  },
-  {
-    id: 'NC-98417',
-    customer: 'Vikram Kapoor',
-    phone: '+91 98711 20045',
-    items: 'Wedding Keepsake Neon ("#TheKapoorWed", Warm Gold, 100cm)',
-    amount: '₹6,499',
-    status: 'new',
-    placedAt: 'Yesterday, 1:10 PM',
-    tracking: 'BD-88491017IN'
+// Real Production Orders & Trade Storage Helpers
+const getStoredStoreOrders = () => {
+  try {
+    const raw = localStorage.getItem('neocraft_production_orders');
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
   }
-];
+};
 
-const INITIAL_TRADE_APPLICATIONS = [
-  {
-    id: 'TRADE-101',
-    name: 'Sameer Sen',
-    firm: 'Sen & Associates Architecture',
-    city: 'Mumbai',
-    gstin: '27AABCS1429B1Z8',
-    status: 'pending' // 'pending' | 'approved'
-  },
-  {
-    id: 'TRADE-102',
-    name: 'Natasha Oberoi',
-    firm: 'Oberoi Design Studio',
-    city: 'Bengaluru',
-    gstin: '29AAFCO8821C1Z4',
-    status: 'approved'
+const getStoredTradeApps = () => {
+  try {
+    const raw = localStorage.getItem('neocraft_trade_applications');
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
   }
-];
+};
 
 export default function AppleAdminDashboard({
   onNavigate
@@ -121,10 +68,24 @@ export default function AppleAdminDashboard({
   const [pinError, setPinError] = useState(false);
 
   const [activeTab, setActiveTab] = useState('orders'); // 'orders' | 'trade' | 'inventory' | 'promos'
-  const [orders, setOrders] = useState(INITIAL_ORDERS);
-  const [tradeApps, setTradeApps] = useState(INITIAL_TRADE_APPLICATIONS);
+  const [orders, setOrders] = useState(getStoredStoreOrders);
+  const [tradeApps, setTradeApps] = useState(getStoredTradeApps);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+
+  // Real-time listener for incoming store orders
+  useEffect(() => {
+    const handleSync = () => {
+      setOrders(getStoredStoreOrders());
+      setTradeApps(getStoredTradeApps());
+    };
+    window.addEventListener('neocraft_orders_updated', handleSync);
+    window.addEventListener('neocraft_trade_updated', handleSync);
+    return () => {
+      window.removeEventListener('neocraft_orders_updated', handleSync);
+      window.removeEventListener('neocraft_trade_updated', handleSync);
+    };
+  }, []);
 
   // New Promo Code Form state
   const [promoCode, setPromoCode] = useState('');
@@ -343,10 +304,15 @@ export default function AppleAdminDashboard({
         {/* KPI Analytics HUD */}
         <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="apple-card p-5 border border-[#262629] space-y-1">
-            <span className="text-[11px] text-[#86868b] font-medium block">August Gross Revenue</span>
-            <div className="text-2xl sm:text-3xl font-black text-white tracking-tight">₹28,45,900</div>
+            <span className="text-[11px] text-[#86868b] font-medium block">Total Store Revenue</span>
+            <div className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+              ₹{orders.reduce((sum, o) => {
+                const num = parseFloat(String(o.amount || '0').replace(/[^0-9.]/g, '')) || 0;
+                return sum + num;
+              }, 0).toLocaleString('en-IN')}
+            </div>
             <div className="text-[10px] text-emerald-400 flex items-center gap-1 font-semibold">
-              <TrendingUp className="w-3 h-3" /> +32.4% vs last month
+              <TrendingUp className="w-3 h-3" /> Live Production Counter
             </div>
           </div>
 
@@ -358,13 +324,13 @@ export default function AppleAdminDashboard({
 
           <div className="apple-card p-5 border border-[#262629] space-y-1">
             <span className="text-[11px] text-[#86868b] font-medium block">Trade Partner Network</span>
-            <div className="text-2xl sm:text-3xl font-black text-amber-300 tracking-tight">412 Firms</div>
+            <div className="text-2xl sm:text-3xl font-black text-amber-300 tracking-tight">{tradeApps.filter(t => t.status === 'approved').length} Firms</div>
             <div className="text-[10px] text-[#86868b]">25% Architect Rebates</div>
           </div>
 
           <div className="apple-card p-5 border border-[#262629] space-y-1">
-            <span className="text-[11px] text-[#86868b] font-medium block">Burn-In Quality Pass</span>
-            <div className="text-2xl sm:text-3xl font-black text-emerald-400 tracking-tight">99.98%</div>
+            <span className="text-[11px] text-[#86868b] font-medium block">Quality & Burn-In SLA</span>
+            <div className="text-2xl sm:text-3xl font-black text-emerald-400 tracking-tight">100%</div>
             <div className="text-[10px] text-emerald-400 font-mono">Zero DOA Defects</div>
           </div>
         </section>
@@ -422,89 +388,101 @@ export default function AppleAdminDashboard({
                   <button
                     key={st}
                     onClick={() => { playClickSound(); setStatusFilter(st); }}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] uppercase font-semibold cursor-pointer shrink-0 transition-colors ${
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold capitalize cursor-pointer transition-colors ${
                       statusFilter === st
                         ? 'bg-[#2997ff] text-white'
                         : 'bg-[#18181b] text-[#86868b] hover:text-white border border-[#2d2d30]'
                     }`}
                   >
-                    {st}
+                    {st === 'all' ? 'All Orders' : st}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Orders Table */}
-            <div className="apple-card border border-[#262629] overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-[#121214] text-[#86868b] border-b border-[#222225] uppercase text-[10px] tracking-wider">
-                    <tr>
-                      <th className="py-3.5 px-4 font-semibold">Order ID & Placed</th>
-                      <th className="py-3.5 px-4 font-semibold">Customer & Phone</th>
-                      <th className="py-3.5 px-4 font-semibold">Custom Sign Details</th>
-                      <th className="py-3.5 px-4 font-semibold">Amount</th>
-                      <th className="py-3.5 px-4 font-semibold">Fabrication Stage</th>
-                      <th className="py-3.5 px-4 font-semibold text-right">Quick Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#222225]">
-                    {filteredOrders.map((order) => (
-                      <tr key={order.id} className="hover:bg-[#151518] transition-colors">
-                        <td className="py-4 px-4 font-mono font-bold text-white whitespace-nowrap">
-                          <div>{order.id}</div>
-                          <span className="text-[10px] text-[#86868b] font-sans font-normal">{order.placedAt}</span>
-                        </td>
-
-                        <td className="py-4 px-4">
-                          <div className="font-semibold text-white">{order.customer}</div>
-                          <div className="text-[10px] text-[#86868b] font-mono">{order.phone}</div>
-                        </td>
-
-                        <td className="py-4 px-4 text-[#d1d1d6] max-w-xs">
-                          {order.items}
-                        </td>
-
-                        <td className="py-4 px-4 font-mono font-bold text-white whitespace-nowrap">
-                          {order.amount}
-                        </td>
-
-                        <td className="py-4 px-4 whitespace-nowrap">
-                          <select
-                            value={order.status}
-                            onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value)}
-                            className={`px-2.5 py-1 rounded-lg text-xs font-semibold border cursor-pointer ${
-                              order.status === 'dispatched'
-                                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                                : order.status === 'burn-in'
-                                ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
-                                : 'bg-[#2997ff]/20 text-[#2997ff] border-[#2997ff]/30'
-                            }`}
-                          >
-                            <option value="new" className="bg-black text-white">📥 New Order</option>
-                            <option value="milling" className="bg-black text-white">⚡ CNC Laser Milling</option>
-                            <option value="wiring" className="bg-black text-white">💡 Flex Bending & Wiring</option>
-                            <option value="burn-in" className="bg-black text-white">🔬 24h Burn-In Test</option>
-                            <option value="dispatched" className="bg-black text-white">📦 Dispatched (BlueDart)</option>
-                          </select>
-                        </td>
-
-                        <td className="py-4 px-4 text-right whitespace-nowrap">
-                          <button
-                            onClick={() => handleSendWhatsAppUpdate(order)}
-                            className="p-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/30 border border-emerald-500/30 text-emerald-400 transition-colors cursor-pointer inline-flex items-center gap-1 text-[11px] font-semibold"
-                            title="Send WhatsApp Shipping Update"
-                          >
-                            <MessageCircle className="w-3.5 h-3.5" />
-                            <span>WhatsApp Status</span>
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            {/* Orders Table or Clean Empty State */}
+            {filteredOrders.length === 0 ? (
+              <div className="p-12 text-center rounded-3xl bg-[#121216] border border-[#222226] space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-[#1c1c22] border border-white/10 flex items-center justify-center mx-auto text-[#2997ff]">
+                  <Package className="w-6 h-6" />
+                </div>
+                <h4 className="text-sm font-bold text-white">No Orders in Queue</h4>
+                <p className="text-xs text-[#86868b] max-w-sm mx-auto leading-relaxed">
+                  Real customer orders placed on Custom Neon Studio 2.0, Canvas Gallery, or Bottle Presenters will stream in here live.
+                </p>
               </div>
-            </div>
+            ) : (
+              <div className="apple-card border border-[#262629] overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="border-b border-[#222225] text-[#86868b] uppercase text-[10px] tracking-wider font-bold">
+                        <th className="py-3 px-4">Order ID & Date</th>
+                        <th className="py-3 px-4">Customer Details</th>
+                        <th className="py-3 px-4">Sign / Artwork Specs</th>
+                        <th className="py-3 px-4">Amount</th>
+                        <th className="py-3 px-4">Fabrication Status</th>
+                        <th className="py-3 px-4 text-right">Dispatch Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#222225]">
+                      {filteredOrders.map((order) => (
+                        <tr key={order.id} className="hover:bg-white/[0.02]">
+                          <td className="py-4 px-4 font-mono whitespace-nowrap">
+                            <strong className="text-[#2997ff] text-xs block">{order.id}</strong>
+                            <span className="text-[10px] text-[#86868b]">{order.placedAt}</span>
+                          </td>
+
+                          <td className="py-4 px-4">
+                            <div className="font-semibold text-white">{order.customer}</div>
+                            <div className="text-[11px] text-[#86868b] font-mono">{order.phone}</div>
+                          </td>
+
+                          <td className="py-4 px-4 text-[#d2d2d7] max-w-xs">
+                            {order.items}
+                          </td>
+
+                          <td className="py-4 px-4 font-mono font-bold text-white whitespace-nowrap">
+                            {order.amount}
+                          </td>
+
+                          <td className="py-4 px-4 whitespace-nowrap">
+                            <select
+                              value={order.status}
+                              onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value)}
+                              className={`px-2.5 py-1 rounded-lg text-xs font-semibold border cursor-pointer ${
+                                order.status === 'dispatched'
+                                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                                  : order.status === 'burn-in'
+                                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                                  : 'bg-[#2997ff]/20 text-[#2997ff] border-[#2997ff]/30'
+                              }`}
+                            >
+                              <option value="new" className="bg-black text-white">📥 New Order</option>
+                              <option value="milling" className="bg-black text-white">⚡ CNC Laser Milling</option>
+                              <option value="wiring" className="bg-black text-white">💡 Flex Bending & Wiring</option>
+                              <option value="burn-in" className="bg-black text-white">🔬 24h Burn-In Test</option>
+                              <option value="dispatched" className="bg-black text-white">📦 Dispatched (BlueDart)</option>
+                            </select>
+                          </td>
+
+                          <td className="py-4 px-4 text-right whitespace-nowrap">
+                            <button
+                              onClick={() => handleSendWhatsAppUpdate(order)}
+                              className="p-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/30 border border-emerald-500/30 text-emerald-400 transition-colors cursor-pointer inline-flex items-center gap-1 text-[11px] font-semibold"
+                              title="Send WhatsApp Shipping Update"
+                            >
+                              <MessageCircle className="w-3.5 h-3.5" />
+                              <span>WhatsApp Status</span>
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
 
           </section>
         )}
@@ -518,38 +496,50 @@ export default function AppleAdminDashboard({
                 Approve verified interior design studios to unlock 25% trade discounts and dedicated CAD engineering support.
               </p>
 
-              <div className="space-y-3 pt-2">
-                {tradeApps.map((app) => (
-                  <div
-                    key={app.id}
-                    className="p-4 rounded-2xl bg-[#121214] border border-[#222225] flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-                  >
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <strong className="text-white text-sm">{app.name}</strong>
-                        <span className="text-xs text-[#86868b]">({app.firm}, {app.city})</span>
-                      </div>
-                      <div className="text-[11px] text-[#86868b] font-mono mt-0.5">GSTIN: {app.gstin}</div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      {app.status === 'approved' ? (
-                        <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold flex items-center gap-1">
-                          <CheckCircle2 className="w-3.5 h-3.5" /> Approved (`ARCH25` Active)
-                        </span>
-                      ) : (
-                        <button
-                          onClick={() => handleApproveTrade(app.id)}
-                          className="apple-btn-primary py-2 px-4 text-xs font-semibold cursor-pointer flex items-center gap-1.5"
-                        >
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          <span>Approve & Issue Code</span>
-                        </button>
-                      )}
-                    </div>
+              {tradeApps.length === 0 ? (
+                <div className="p-12 text-center rounded-3xl bg-[#121216] border border-[#222226] space-y-3">
+                  <div className="w-12 h-12 rounded-2xl bg-[#1c1c22] border border-white/10 flex items-center justify-center mx-auto text-amber-400">
+                    <Users className="w-6 h-6" />
                   </div>
-                ))}
-              </div>
+                  <h4 className="text-sm font-bold text-white">No Pending Trade Applications</h4>
+                  <p className="text-xs text-[#86868b] max-w-sm mx-auto leading-relaxed">
+                    Interior designers and architectural firms applying for the 25% Trade Rebate (ARCH25) will appear here for 1-click verification.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3 pt-2">
+                  {tradeApps.map((app) => (
+                    <div
+                      key={app.id}
+                      className="p-4 rounded-2xl bg-[#121214] border border-[#222225] flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                    >
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <strong className="text-white text-sm">{app.name}</strong>
+                          <span className="text-xs text-[#86868b]">({app.firm}, {app.city})</span>
+                        </div>
+                        <div className="text-[11px] text-[#86868b] font-mono mt-0.5">GSTIN: {app.gstin}</div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {app.status === 'approved' ? (
+                          <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold flex items-center gap-1">
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Approved (`ARCH25` Active)
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => handleApproveTrade(app.id)}
+                            className="apple-btn-primary py-2 px-4 text-xs font-semibold cursor-pointer flex items-center gap-1.5"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>Approve & Issue Code</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </section>
         )}

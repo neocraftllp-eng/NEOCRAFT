@@ -41,6 +41,22 @@ export default function AppleTradePartnerModal({
     playChimeSound();
     setStep('approved');
 
+    // Save to Admin Trade Pipeline
+    try {
+      const existing = JSON.parse(localStorage.getItem('neocraft_trade_applications') || '[]');
+      const newApp = {
+        id: `TRADE-${Math.floor(100 + Math.random() * 900)}`,
+        name: form.contactName,
+        firm: form.firmName,
+        city: form.city || 'India',
+        gstin: form.gstNumber || 'Unregistered / Studio Trade',
+        status: 'approved',
+        phone: form.phone
+      };
+      localStorage.setItem('neocraft_trade_applications', JSON.stringify([newApp, ...existing]));
+      window.dispatchEvent(new Event('neocraft_trade_updated'));
+    } catch (err) {}
+
     confetti({
       particleCount: 140,
       spread: 80,

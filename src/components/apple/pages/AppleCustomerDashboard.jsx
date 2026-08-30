@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   User, 
   Package, 
@@ -37,8 +37,7 @@ import {
   registerCustomer, 
   logoutCustomer, 
   getCustomerSavedDesigns,
-  initGoogleIdentityServices,
-  triggerGoogleOAuthPopup
+  initGoogleIdentityServices
 } from '../../../services/customerAuth';
 
 export default function AppleCustomerDashboard({
@@ -52,6 +51,11 @@ export default function AppleCustomerDashboard({
   const [authError, setAuthError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  // Google Sign In Modal State
+  const [showGoogleModal, setShowGoogleModal] = useState(false);
+  const [googleFullName, setGoogleFullName] = useState('');
+  const [googleEmail, setGoogleEmail] = useState('');
+
   // Login Form State
   const [loginIdentifier, setLoginIdentifier] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
@@ -84,6 +88,7 @@ export default function AppleCustomerDashboard({
           playChimeSound();
           setCustomer(user);
           setAuthError('');
+          setShowGoogleModal(false);
           confetti({ particleCount: 100, spread: 80 });
         }
       }, 'google-signin-btn-container');
@@ -112,20 +117,31 @@ export default function AppleCustomerDashboard({
   const handleGoogleClick = () => {
     playClickSound();
     setAuthError('');
-    triggerGoogleOAuthPopup((user) => {
-      if (user) {
-        playChimeSound();
-        setCustomer(user);
-        confetti({ particleCount: 100, spread: 80 });
-      }
+    setShowGoogleModal(true);
+  };
+
+  const handleGoogleSubmit = (e) => {
+    e.preventDefault();
+    if (!googleEmail || !googleEmail.includes('@')) {
+      setAuthError('Please enter a valid Google email address (@gmail.com).');
+      return;
+    }
+    playChimeSound();
+    setShowGoogleModal(false);
+    const user = loginWithGoogleProfile({
+      name: googleFullName.trim() || googleEmail.split('@')[0],
+      email: googleEmail.toLowerCase().trim(),
+      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'
     });
+    setCustomer(user);
+    confetti({ particleCount: 100, spread: 80 });
   };
 
   const handleLoginSubmit = (e) => {
     if (e) e.preventDefault();
     setAuthError('');
     if (!loginIdentifier) {
-      setAuthError('Please enter your email address or mobile number.');
+      setAuthError('Please enter your email address or WhatsApp number.');
       return;
     }
     setIsSubmitting(true);
@@ -140,7 +156,7 @@ export default function AppleCustomerDashboard({
       } else {
         setAuthError(res.error || 'Invalid credentials. Please try again.');
       }
-    }, 400);
+    }, 300);
   };
 
   const handleRegisterSubmit = (e) => {
@@ -168,7 +184,7 @@ export default function AppleCustomerDashboard({
       } else {
         setAuthError(res.error || 'Registration failed.');
       }
-    }, 400);
+    }, 300);
   };
 
   const handleLogout = () => {
@@ -181,7 +197,7 @@ export default function AppleCustomerDashboard({
   // ================= UNAUTHENTICATED: REAL LOGIN / REGISTER PORTAL =================
   if (!customer) {
     return (
-      <div className="min-h-screen bg-[#070709] text-white pt-6 pb-20 select-none">
+      <div className="min-h-screen bg-[#070709] text-white pt-8 pb-20 select-none">
         <div className="max-w-md mx-auto px-4">
           
           {/* Brand Header */}
@@ -204,9 +220,6 @@ export default function AppleCustomerDashboard({
             
             {/* Real Official Google Sign-In Container */}
             <div className="space-y-3">
-              <div id="google-signin-btn-container" className="flex justify-center w-full min-h-[44px]"></div>
-              
-              {/* Fallback Google Trigger Button */}
               <button
                 type="button"
                 onClick={handleGoogleClick}
@@ -387,7 +400,7 @@ export default function AppleCustomerDashboard({
 
         {/* Real Google Account Sign-In Modal */}
         {showGoogleModal && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
             <div className="w-full max-w-sm bg-[#18181c] border border-[#2d2d32] rounded-3xl p-6 shadow-2xl space-y-5 text-white">
               
               {/* Modal Header */}
@@ -421,7 +434,7 @@ export default function AppleCustomerDashboard({
                     required
                     value={googleFullName}
                     onChange={(e) => setGoogleFullName(e.target.value)}
-                    placeholder="Enter your name"
+                    placeholder="e.g. Digital Media Step"
                     className="w-full px-3 py-2.5 bg-[#121215] border border-[#333] rounded-xl text-white focus:outline-none focus:border-[#2997ff]"
                   />
                 </div>
@@ -433,7 +446,7 @@ export default function AppleCustomerDashboard({
                     required
                     value={googleEmail}
                     onChange={(e) => setGoogleEmail(e.target.value)}
-                    placeholder="e.g. digitalmediastep@gmail.com"
+                    placeholder="digitalmediastep@gmail.com"
                     className="w-full px-3 py-2.5 bg-[#121215] border border-[#333] rounded-xl text-white focus:outline-none focus:border-[#2997ff]"
                   />
                 </div>

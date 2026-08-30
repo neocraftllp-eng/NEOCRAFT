@@ -126,4 +126,13 @@ export function updatePageSEO(pageId = 'home') {
     const cleanPath = pageId === 'home' ? '' : pageId;
     canonical.setAttribute('href', `https://neocraftx.com/${cleanPath}`);
   }
+
+  // 6. Send Dynamic Google Analytics 4 (GA4) Pageview
+  if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+    const cleanPath = pageId === 'home' ? '/' : `/${pageId}`;
+    window.gtag('config', 'G-E1RLXCG4NF', {
+      page_title: seoData.title,
+      page_path: cleanPath
+    });
+  }
 }

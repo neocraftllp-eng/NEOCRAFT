@@ -32,7 +32,7 @@ export default function AppleCheckoutModal({
   selectedCurrency = 'INR'
 }) {
   const [step, setStep] = useState('shipping'); // 'shipping' | 'payment' | 'processing' | 'success'
-  const [paymentGateway, setPaymentGateway] = useState('upi'); // 'upi' | 'card' | 'applepay' | 'netbanking' | 'emi' | 'cod'
+  const [paymentGateway, setPaymentGateway] = useState('dodo'); // 'dodo' | 'upi' | 'razorpay' | 'card' | 'applepay' | 'netbanking' | 'emi' | 'cod'
   const [orderId, setOrderId] = useState('');
   const [customer, setCustomer] = useState(getCurrentCustomer);
   
@@ -340,14 +340,15 @@ export default function AppleCheckoutModal({
                 <span className="font-semibold text-[#86868b] uppercase tracking-wider block">
                   Select Payment Method:
                 </span>
-                <div className="grid grid-cols-3 sm:grid-cols-7 gap-1.5">
+                <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5">
                   {[
+                    { id: 'dodo', label: 'Dodo Pay', icon: '🦤', badge: 'Global MoR' },
                     { id: 'razorpay', label: 'Razorpay', icon: '⚡', badge: 'Live' },
                     { id: 'upi', label: 'UPI / QR', icon: '📱' },
                     { id: 'card', label: 'Cards', icon: '💳' },
                     { id: 'applepay', label: 'Apple Pay', icon: '🍎' },
                     { id: 'netbanking', label: 'NetBanking', icon: '🏛️' },
-                    { id: 'emi', label: 'No-Cost EMI', icon: '📅' },
+                    { id: 'emi', label: 'EMI', icon: '📅' },
                     { id: 'cod', label: 'COD (20%)', icon: '📦' }
                   ].map((gw) => (
                     <button
@@ -366,6 +367,49 @@ export default function AppleCheckoutModal({
                   ))}
                 </div>
               </div>
+
+              {/* Gateway Tab 0: Dodo Payments (Global MoR Checkout) */}
+              {paymentGateway === 'dodo' && (
+                <div className="p-5 rounded-2xl bg-gradient-to-br from-[#1c1824] to-[#121218] border border-[#ff6b00]/40 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">🦤</span>
+                      <div>
+                        <div className="font-bold text-white text-xs flex items-center gap-1.5">
+                          <span>Dodo Payments Global Checkout</span>
+                          <span className="px-1.5 py-0.5 rounded-full bg-[#ff6b00]/20 text-[#ff8c38] text-[9px] font-bold uppercase">
+                            Official Gateway
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-[#86868b]">All Indian UPI Apps (GPay/PhonePe), Global Cards, Apple Pay & Zero Forex</span>
+                      </div>
+                    </div>
+
+                    <div className="text-right font-mono text-xs text-emerald-400 font-bold">
+                      Zero Forex Fee
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-[11px]">
+                    <div className="p-2.5 rounded-xl bg-black/50 border border-white/10 text-center">
+                      <div className="font-bold text-white">India UPI / QR</div>
+                      <div className="text-[9px] text-[#86868b]">GPay, PhonePe, Paytm</div>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-black/50 border border-white/10 text-center">
+                      <div className="font-bold text-white">Global & Local Cards</div>
+                      <div className="text-[9px] text-[#86868b]">Visa, MC, Amex, RuPay</div>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-black/50 border border-white/10 text-center">
+                      <div className="font-bold text-white">Apple / Google Pay</div>
+                      <div className="text-[9px] text-[#86868b]">1-Click Biometric</div>
+                    </div>
+                    <div className="p-2.5 rounded-xl bg-black/50 border border-white/10 text-center">
+                      <div className="font-bold text-white">Global Currencies</div>
+                      <div className="text-[9px] text-[#86868b]">INR, USD, EUR, AED, GBP</div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Gateway Tab 0: Razorpay Official Multi-Option Gateway */}
               {paymentGateway === 'razorpay' && (

@@ -181,18 +181,23 @@ export default function AppleRedditCommunityPage({
     setNewImageUrl('');
   };
 
-  // Filtered Posts
-  const filteredPosts = posts
-    .filter(p => selectedFlair === 'All' || p.subreddit === selectedFlair)
-    .filter(p => 
-      p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.author.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+  // Filtered Posts with Bulletproof Null-Safety
+  const filteredPosts = (posts || [])
+    .filter(p => selectedFlair === 'All' || p?.subreddit === selectedFlair)
+    .filter(p => {
+      if (!p) return false;
+      const q = (searchQuery || '').toLowerCase().trim();
+      if (!q) return true;
+      const titleMatch = (p.title || '').toLowerCase().includes(q);
+      const contentMatch = (p.content || '').toLowerCase().includes(q);
+      const authorMatch = (p.author || '').toLowerCase().includes(q);
+      const hashtagMatch = Array.isArray(p.hashtags) && p.hashtags.some(h => (h || '').toLowerCase().includes(q));
+      return titleMatch || contentMatch || authorMatch || hashtagMatch;
+    })
     .sort((a, b) => {
-      if (activeTab === 'hot') return b.upvotes - a.upvotes;
+      if (activeTab === 'hot') return (b?.upvotes || 0) - (a?.upvotes || 0);
       if (activeTab === 'new') return 0;
-      if (activeTab === 'top') return b.upvotes - a.upvotes;
+      if (activeTab === 'top') return (b?.upvotes || 0) - (a?.upvotes || 0);
       return 0;
     });
 

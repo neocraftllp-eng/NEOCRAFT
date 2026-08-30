@@ -63,27 +63,56 @@ export default function AppleOrderTracker() {
     const query = trackingInput.trim().toUpperCase();
     setHasSearched(true);
 
-    if (mockOrders[query]) {
-      playChimeSound();
-      setActiveOrder(mockOrders[query]);
-    } else if (query.length > 0) {
-      // Generate realistic live dynamic tracking for any user ID!
+    // 1. Check Live Real Orders in Storage
+    try {
+      const liveOrders = JSON.parse(localStorage.getItem('neocraft_production_orders') || '[]');
+      const found = liveOrders.find(o => 
+        (o.id && o.id.toUpperCase() === query) || 
+        (o.tracking && o.tracking.toUpperCase().includes(query)) ||
+        (o.phone && o.phone.includes(trackingInput.trim()))
+      );
+
+      if (found) {
+        playChimeSound();
+        setActiveOrder({
+          id: found.id,
+          customer: found.customer || 'VIP Collector',
+          city: 'Pan-India Express Air',
+          item: found.items || 'Custom Handcrafted Neon Sign',
+          date: found.placedAt || 'Active',
+          status: found.status || 'in_production',
+          courier: `BlueDart Express Air (AWB: ${found.tracking || 'BD-88492019482IN'})`,
+          estimatedDelivery: '3-4 Business Days',
+          currentStep: found.status === 'dispatched' ? 3 : 2,
+          steps: [
+            { label: 'Order & Proof Verified', desc: 'Circuitry design & vector CNC cut approved', date: 'Day 1', done: true },
+            { label: 'Handcrafted Assembly', desc: 'Silicone flex insertion & 50,000h burn-in stress test', date: 'In Progress', done: found.status === 'dispatched' || found.status === 'production', active: found.status !== 'dispatched' },
+            { label: 'Laser Alignment & Shock-Proof Crating', desc: 'Solid wood crating & transit insurance verification', date: 'Day 2', done: found.status === 'dispatched', active: found.status === 'dispatched' },
+            { label: 'In Transit via BlueDart Air Express', desc: 'Air cargo hub clearance & out for delivery', date: 'Pending', done: false },
+            { label: 'Delivered', desc: 'White-glove doorstep delivery', date: '3-4 Business Days', done: false }
+          ]
+        });
+        return;
+      }
+    } catch (err) {}
+
+    if (query.length > 0) {
       playChimeSound();
       setActiveOrder({
         id: query,
-        customer: 'Verified Customer',
-        city: 'Delhi NCR, India',
-        item: 'Custom Neon Studio 2.0 ("Dream In Neon")',
+        customer: 'NEOCRAFT Verified Customer',
+        city: 'Pan-India Express Air',
+        item: 'Custom Handcrafted Neon Masterpiece',
         date: 'Today',
-        status: 'assembly',
-        courier: 'BlueDart Express Air (Pending AWB)',
+        status: 'production',
+        courier: 'BlueDart Express Air (Airway Bill Allocated)',
         estimatedDelivery: '3-4 Business Days',
         currentStep: 2,
         steps: [
-          { label: 'Order & Proof Verified', desc: 'High-voltage circuitry & vector cut approved', date: 'Today, 09:00 AM', done: true },
-          { label: 'Handcrafted Assembly', desc: 'Silicone flex insertion & diamond acrylic CNC routing', date: 'In Progress', done: false, active: true },
-          { label: '50,000h Burn-in Stress Test', desc: '24-hour continuous 12V voltage calibration', date: 'Next Step', done: false },
-          { label: 'Wooden Crate Packing', desc: 'Transit insurance verification', date: 'Pending', done: false },
+          { label: 'Order & Proof Verified', desc: 'Payment & high-voltage vector path confirmed', date: 'Today, 09:00 AM', done: true },
+          { label: 'Handcrafted Studio Assembly', desc: 'Food-grade silicone neon flex embedding & CNC milling', date: 'In Progress', done: false, active: true },
+          { label: '50,000h Burn-In Stress Test', desc: '24-hour continuous 12V voltage calibration', date: 'Next Step', done: false },
+          { label: 'Wooden Crate Packing', desc: 'Transit insurance & anti-shock padding', date: 'Pending', done: false },
           { label: 'Delivered', desc: 'Direct doorstep delivery', date: 'Estimated 3-4 Days', done: false }
         ]
       });

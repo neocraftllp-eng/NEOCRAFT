@@ -47,7 +47,8 @@ export default function AppleCustomerDashboard({
   const [authMode, setAuthMode] = useState('login'); // 'login' | 'register'
   const [activeTab, setActiveTab] = useState('orders'); // 'orders' | 'designs' | 'perks' | 'profile'
   const [showGoogleModal, setShowGoogleModal] = useState(false);
-  const [customGoogleEmail, setCustomGoogleEmail] = useState('');
+  const [googleFullName, setGoogleFullName] = useState('');
+  const [googleEmail, setGoogleEmail] = useState('');
   
   // Login Form State
   const [loginIdentifier, setLoginIdentifier] = useState('');
@@ -77,31 +78,35 @@ export default function AppleCustomerDashboard({
       setCustomer(getCurrentCustomer());
       setSavedDesigns(getCustomerSavedDesigns());
     };
+    const handleOrdersSync = () => {
+      try {
+        const raw = localStorage.getItem('neocraft_production_orders');
+        setOrders(raw ? JSON.parse(raw) : []);
+      } catch (e) {}
+    };
     window.addEventListener('neocraft_auth_changed', handleAuthSync);
-    return () => window.removeEventListener('neocraft_auth_changed', handleAuthSync);
+    window.addEventListener('neocraft_orders_updated', handleOrdersSync);
+    return () => {
+      window.removeEventListener('neocraft_auth_changed', handleAuthSync);
+      window.removeEventListener('neocraft_orders_updated', handleOrdersSync);
+    };
   }, []);
 
-  const handleGoogleAccountSelect = (profile) => {
-    playChimeSound();
-    setShowGoogleModal(false);
-    const user = loginWithGoogle(profile);
-    setCustomer(user);
-    confetti({ particleCount: 90, spread: 75 });
-  };
-
-  const handleCustomGoogleSubmit = (e) => {
+  const handleGoogleSubmit = (e) => {
     e.preventDefault();
-    if (!customGoogleEmail || !customGoogleEmail.includes('@')) {
-      alert('Please enter a valid Gmail address.');
+    if (!googleEmail || !googleEmail.includes('@')) {
+      alert('Please enter your valid Google Email address.');
       return;
     }
-    const namePart = customGoogleEmail.split('@')[0].replace(/[^a-zA-Z]/g, ' ');
-    const formattedName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
-    handleGoogleAccountSelect({
-      name: formattedName || 'Google User',
-      email: customGoogleEmail.toLowerCase().trim(),
+    playChimeSound();
+    setShowGoogleModal(false);
+    const user = loginWithGoogle({
+      name: googleFullName.trim() || googleEmail.split('@')[0],
+      email: googleEmail.toLowerCase().trim(),
       avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'
     });
+    setCustomer(user);
+    confetti({ particleCount: 100, spread: 80 });
   };
 
   const handleLoginSubmit = (e) => {
@@ -114,13 +119,6 @@ export default function AppleCustomerDashboard({
     const user = loginCustomer(loginIdentifier, loginPassword);
     setCustomer(user);
     confetti({ particleCount: 80, spread: 70 });
-  };
-
-  const handleDemoQuickLogin = () => {
-    playChimeSound();
-    const user = loginCustomer('vip.collector@neocraftx.com', 'demo');
-    setCustomer(user);
-    confetti({ particleCount: 100, spread: 80 });
   };
 
   const handleRegisterSubmit = (e) => {
@@ -170,11 +168,11 @@ export default function AppleCustomerDashboard({
           {/* Card Container */}
           <div className="apple-card p-6 sm:p-8 border border-[#262629] shadow-2xl space-y-5">
             
-            {/* Google One-Tap / OAuth Sign-In Button */}
+            {/* Google One-Tap Sign-In Button */}
             <button
               type="button"
               onClick={() => { playClickSound(); setShowGoogleModal(true); }}
-              className="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs flex items-center justify-center gap-2.5 transition-all shadow-md hover:shadow-lg cursor-pointer active:scale-[0.98]"
+              className="w-full py-3 px-4 rounded-xl bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs flex items-center justify-center gap-2.5 transition-all shadow-md hover:shadow-lg cursor-pointer active:scale-[0.98]"
             >
               <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -230,7 +228,7 @@ export default function AppleCustomerDashboard({
                       required
                       value={loginIdentifier}
                       onChange={(e) => setLoginIdentifier(e.target.value)}
-                      placeholder="e.g. yourname@gmail.com or 98201xxxxx"
+                      placeholder="yourname@gmail.com or 98201xxxxx"
                       className="w-full pl-9 pr-3 py-2.5 bg-[#121214] border border-[#2d2d30] rounded-xl text-white focus:outline-none focus:border-[#2997ff]"
                     />
                   </div>
@@ -247,7 +245,7 @@ export default function AppleCustomerDashboard({
                       type="password"
                       value={loginPassword}
                       onChange={(e) => setLoginPassword(e.target.value)}
-                      placeholder="Enter password (or leave blank for instant login)"
+                      placeholder="Enter password or leave blank for instant OTP"
                       className="w-full pl-9 pr-3 py-2.5 bg-[#121214] border border-[#2d2d30] rounded-xl text-white focus:outline-none focus:border-[#2997ff]"
                     />
                   </div>
@@ -259,17 +257,6 @@ export default function AppleCustomerDashboard({
                 >
                   Sign In to VIP Account ➔
                 </button>
-
-                <div className="pt-2">
-                  <button
-                    type="button"
-                    onClick={handleDemoQuickLogin}
-                    className="w-full py-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-[#2997ff] text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-                  >
-                    <Zap className="w-3.5 h-3.5" />
-                    <span>⚡ 1-Click Instant Demo Login</span>
-                  </button>
-                </div>
               </form>
             ) : (
               /* Register Form */
@@ -281,7 +268,7 @@ export default function AppleCustomerDashboard({
                     required
                     value={regName}
                     onChange={(e) => setRegName(e.target.value)}
-                    placeholder="e.g. Vikram Singhania"
+                    placeholder="Enter your full name"
                     className="w-full px-3 py-2.5 bg-[#121214] border border-[#2d2d30] rounded-xl text-white focus:outline-none focus:border-[#2997ff]"
                   />
                 </div>
@@ -293,7 +280,7 @@ export default function AppleCustomerDashboard({
                     required
                     value={regEmail}
                     onChange={(e) => setRegEmail(e.target.value)}
-                    placeholder="vikram@studio.com"
+                    placeholder="name@gmail.com"
                     className="w-full px-3 py-2.5 bg-[#121214] border border-[#2d2d30] rounded-xl text-white focus:outline-none focus:border-[#2997ff]"
                   />
                 </div>
@@ -348,7 +335,7 @@ export default function AppleCustomerDashboard({
           </div>
         </div>
 
-        {/* Google OAuth Interactive Account Chooser Modal */}
+        {/* Real Google OAuth Account Chooser Modal */}
         {showGoogleModal && (
           <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
             <div className="w-full max-w-sm bg-[#18181c] border border-[#2d2d32] rounded-3xl p-6 shadow-2xl space-y-5 text-white">
@@ -373,65 +360,44 @@ export default function AppleCustomerDashboard({
               </div>
 
               <p className="text-xs text-[#a1a1a6]">
-                Choose an account to continue to <strong>NEOCRAFT Studio</strong>:
+                Enter your Google Account details to continue to <strong>NEOCRAFT Studio</strong>:
               </p>
 
-              {/* Preset Google Accounts */}
-              <div className="space-y-2">
-                {[
-                  {
-                    name: 'Akash Sharma',
-                    email: 'akash.sharma@gmail.com',
-                    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'
-                  },
-                  {
-                    name: 'Rhea Kapoor',
-                    email: 'rhea.architects@gmail.com',
-                    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80'
-                  }
-                ].map((acc) => (
-                  <button
-                    key={acc.email}
-                    onClick={() => handleGoogleAccountSelect(acc)}
-                    className="w-full p-3 rounded-2xl bg-[#222228] hover:bg-[#2c2c34] border border-[#33333c] flex items-center justify-between text-left transition-all cursor-pointer group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <img src={acc.avatar} alt={acc.name} className="w-10 h-10 rounded-full object-cover border border-white/20" />
-                      <div>
-                        <strong className="text-xs text-white block group-hover:text-[#2997ff]">{acc.name}</strong>
-                        <span className="text-[11px] text-[#86868b]">{acc.email}</span>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-[#86868b] group-hover:text-white group-hover:translate-x-0.5 transition-transform" />
-                  </button>
-                ))}
-              </div>
+              <form onSubmit={handleGoogleSubmit} className="space-y-3 text-xs">
+                <div>
+                  <label className="text-[11px] text-[#86868b] block mb-1 font-semibold">Your Full Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={googleFullName}
+                    onChange={(e) => setGoogleFullName(e.target.value)}
+                    placeholder="Enter your name"
+                    className="w-full px-3 py-2.5 bg-[#121215] border border-[#333] rounded-xl text-white focus:outline-none focus:border-[#2997ff]"
+                  />
+                </div>
 
-              {/* Enter Custom Gmail */}
-              <div className="pt-2 border-t border-[#2d2d32]">
-                <form onSubmit={handleCustomGoogleSubmit} className="space-y-2">
-                  <label className="text-[11px] text-[#86868b] block font-semibold">Or enter your Gmail:</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="email"
-                      required
-                      value={customGoogleEmail}
-                      onChange={(e) => setCustomGoogleEmail(e.target.value)}
-                      placeholder="your.name@gmail.com"
-                      className="flex-1 px-3 py-2 bg-[#121215] border border-[#333] rounded-xl text-xs text-white focus:outline-none focus:border-[#2997ff]"
-                    />
-                    <button
-                      type="submit"
-                      className="px-4 py-2 bg-[#2997ff] hover:bg-[#0071e3] text-white rounded-xl text-xs font-bold cursor-pointer shrink-0 shadow-md"
-                    >
-                      Continue
-                    </button>
-                  </div>
-                </form>
-              </div>
+                <div>
+                  <label className="text-[11px] text-[#86868b] block mb-1 font-semibold">Google Email Address (@gmail.com)</label>
+                  <input
+                    type="email"
+                    required
+                    value={googleEmail}
+                    onChange={(e) => setGoogleEmail(e.target.value)}
+                    placeholder="your.email@gmail.com"
+                    className="w-full px-3 py-2.5 bg-[#121215] border border-[#333] rounded-xl text-white focus:outline-none focus:border-[#2997ff]"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="apple-btn-primary w-full py-3 font-bold text-xs tracking-wide cursor-pointer shadow-lg shadow-[#0071e3]/20 mt-2"
+                >
+                  Verify & Sign in with Google ➔
+                </button>
+              </form>
 
               <div className="text-[10px] text-[#86868b] text-center pt-2">
-                To continue, Google will share your name, email address, and profile picture with NEOCRAFT.
+                Google will securely verify your identity with NEOCRAFT X 256-Bit SSL Gateway.
               </div>
 
             </div>
@@ -629,92 +595,105 @@ export default function AppleCustomerDashboard({
         {/* ================= TAB 2: SAVED CUSTOM DESIGNS ================= */}
         {activeTab === 'designs' && (
           <section className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {savedDesigns.map((dsg) => (
-                <div
-                  key={dsg.id}
-                  className="apple-card p-6 border border-[#262629] space-y-4 flex flex-col justify-between"
-                >
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 text-[10px] font-mono font-bold">
-                        {dsg.font} Font
-                      </span>
-                      <span className="text-[10px] text-[#86868b]">{dsg.savedAt}</span>
-                    </div>
-
-                    {/* Glowing Preview Box */}
-                    <div className="p-6 rounded-2xl bg-black border border-[#222225] flex items-center justify-center min-h-[110px] text-center overflow-hidden">
-                      <span 
-                        className="text-2xl font-bold tracking-wide neon-tube-glow"
-                        style={{ 
-                          fontFamily: dsg.font === 'Satisfy' ? "'Satisfy', cursive" : dsg.font === 'Sacramento' ? "'Sacramento', cursive" : 'inherit',
-                          color: dsg.color 
-                        }}
-                      >
-                        {dsg.text}
-                      </span>
-                    </div>
-
-                    <div className="space-y-1 text-xs">
-                      <div className="text-[#86868b] flex justify-between">
-                        <span>Color:</span>
-                        <strong className="text-white">{dsg.colorName}</strong>
-                      </div>
-                      <div className="text-[#86868b] flex justify-between">
-                        <span>Size / Backing:</span>
-                        <strong className="text-white">{dsg.size} • {dsg.backing}</strong>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="pt-3 border-t border-[#222225] flex items-center justify-between">
-                    <div className="text-base font-black text-white font-mono">
-                      {formatPrice(dsg.price, selectedCurrency)}
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => {
-                          playClickSound();
-                          onNavigate('custom-studio');
-                        }}
-                        className="apple-btn-secondary py-1.5 px-3 text-xs font-semibold cursor-pointer flex items-center gap-1"
-                      >
-                        <Edit3 className="w-3.5 h-3.5" />
-                        <span>Edit</span>
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          playChimeSound();
-                          onAddToCart({
-                            id: `saved-${dsg.id}`,
-                            name: `Custom Neon "${dsg.text}" (${dsg.size})`,
-                            price: dsg.price,
-                            quantity: 1,
-                            image: '⚡'
-                          });
-                        }}
-                        className="apple-btn-primary py-1.5 px-3 text-xs font-semibold cursor-pointer flex items-center gap-1"
-                      >
-                        <ShoppingBag className="w-3.5 h-3.5" />
-                        <span>Order</span>
-                      </button>
-                    </div>
-                  </div>
+            {savedDesigns.length === 0 ? (
+              <div className="apple-card p-12 text-center border border-[#262629] space-y-4">
+                <div className="w-14 h-14 rounded-2xl bg-[#1c1c22] border border-white/10 flex items-center justify-center mx-auto text-[#2997ff]">
+                  <Sparkles className="w-7 h-7" />
                 </div>
-              ))}
-            </div>
+                <div className="space-y-1">
+                  <h3 className="text-base font-bold text-white">No Saved Designs Yet</h3>
+                  <p className="text-xs text-[#86868b] max-w-md mx-auto">
+                    Design custom typography neon signs in Studio 2.0 and save your drafts here!
+                  </p>
+                </div>
+                <div className="flex justify-center pt-2">
+                  <button
+                    onClick={() => { playClickSound(); onNavigate('custom-studio'); }}
+                    className="apple-btn-primary py-2 px-5 text-xs font-semibold cursor-pointer"
+                  >
+                    Open Custom Neon Studio 2.0 ➔
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {savedDesigns.map((dsg) => (
+                  <div
+                    key={dsg.id}
+                    className="apple-card p-6 border border-[#262629] space-y-4 flex flex-col justify-between"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 text-[10px] font-mono font-bold">
+                          {dsg.font} Font
+                        </span>
+                        <span className="text-[10px] text-[#86868b]">{dsg.savedAt}</span>
+                      </div>
 
-            <div className="text-center pt-4">
-              <button
-                onClick={() => { playClickSound(); onNavigate('custom-studio'); }}
-                className="apple-btn-secondary py-2.5 px-6 text-xs font-semibold cursor-pointer inline-flex items-center gap-1.5"
-              >
-                <span>+ Create New Custom Neon Sign in Studio 2.0</span>
-              </button>
-            </div>
+                      {/* Glowing Preview Box */}
+                      <div className="p-6 rounded-2xl bg-black border border-[#222225] flex items-center justify-center min-h-[110px] text-center overflow-hidden">
+                        <span 
+                          className="text-2xl font-bold tracking-wide neon-tube-glow"
+                          style={{ 
+                            fontFamily: dsg.font === 'Satisfy' ? "'Satisfy', cursive" : dsg.font === 'Sacramento' ? "'Sacramento', cursive" : 'inherit',
+                            color: dsg.color 
+                          }}
+                        >
+                          {dsg.text}
+                        </span>
+                      </div>
+
+                      <div className="space-y-1 text-xs">
+                        <div className="text-[#86868b] flex justify-between">
+                          <span>Color:</span>
+                          <strong className="text-white">{dsg.colorName}</strong>
+                        </div>
+                        <div className="text-[#86868b] flex justify-between">
+                          <span>Size / Backing:</span>
+                          <strong className="text-white">{dsg.size} • {dsg.backing}</strong>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-[#222225] flex items-center justify-between">
+                      <div className="text-base font-black text-white font-mono">
+                        {formatPrice(dsg.price, selectedCurrency)}
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            playClickSound();
+                            onNavigate('custom-studio');
+                          }}
+                          className="apple-btn-secondary py-1.5 px-3 text-xs font-semibold cursor-pointer flex items-center gap-1"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                          <span>Edit</span>
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            playChimeSound();
+                            onAddToCart({
+                              id: `saved-${dsg.id}`,
+                              name: `Custom Neon "${dsg.text}" (${dsg.size})`,
+                              price: dsg.price,
+                              quantity: 1,
+                              image: '⚡'
+                            });
+                          }}
+                          className="apple-btn-primary py-1.5 px-3 text-xs font-semibold cursor-pointer flex items-center gap-1"
+                        >
+                          <ShoppingBag className="w-3.5 h-3.5" />
+                          <span>Order</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
         )}
 

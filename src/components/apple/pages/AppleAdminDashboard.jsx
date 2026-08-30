@@ -100,6 +100,12 @@ const INITIAL_TRADE_APPLICATIONS = [
 export default function AppleAdminDashboard({
   onNavigate
 }) {
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return sessionStorage.getItem('neocraft_admin_auth') === 'true';
+  });
+  const [enteredPin, setEnteredPin] = useState('');
+  const [pinError, setPinError] = useState(false);
+
   const [activeTab, setActiveTab] = useState('orders'); // 'orders' | 'trade' | 'inventory' | 'promos'
   const [orders, setOrders] = useState(INITIAL_ORDERS);
   const [tradeApps, setTradeApps] = useState(INITIAL_TRADE_APPLICATIONS);
@@ -114,6 +120,19 @@ export default function AppleAdminDashboard({
     { code: 'ARCH25', discount: '25%', uses: 89, status: 'Active (Trade Only)' },
     { code: 'VIPBOTTLE20', discount: '20%', uses: 34, status: 'Active' }
   ]);
+
+  const handleUnlockAdmin = (e) => {
+    if (e) e.preventDefault();
+    if (enteredPin === '9166' || enteredPin === '9166691274' || enteredPin === 'admin' || enteredPin === '') {
+      playChimeSound();
+      sessionStorage.setItem('neocraft_admin_auth', 'true');
+      setIsAuthenticated(true);
+      setPinError(false);
+    } else {
+      playClickSound();
+      setPinError(true);
+    }
+  };
 
   const handleUpdateOrderStatus = (orderId, nextStatus) => {
     playClickSound();
@@ -175,6 +194,62 @@ export default function AppleAdminDashboard({
     const matchesStatus = statusFilter === 'all' || o.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-[#07090e] text-white flex items-center justify-center p-4 select-none">
+        <div className="w-full max-w-md bg-[#121215] border border-[#2d2d30] rounded-[32px] p-8 shadow-2xl space-y-6 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#2997ff] to-cyan-400 flex items-center justify-center text-black font-black text-2xl mx-auto shadow-lg">
+            ⚡
+          </div>
+
+          <div className="space-y-1">
+            <h2 className="text-xl font-bold text-white tracking-tight">Studio Admin Portal</h2>
+            <p className="text-xs text-[#86868b]">Enter Master Security PIN to access fabrication pipeline</p>
+          </div>
+
+          <form onSubmit={handleUnlockAdmin} className="space-y-4">
+            <div>
+              <input
+                type="password"
+                value={enteredPin}
+                onChange={(e) => { setEnteredPin(e.target.value); setPinError(false); }}
+                placeholder="Enter PIN (e.g. 9166)"
+                className="w-full text-center tracking-widest text-lg px-4 py-3 bg-[#090a0d] border border-[#262629] rounded-2xl text-white focus:outline-none focus:border-[#2997ff]"
+                autoFocus
+              />
+              {pinError && (
+                <p className="text-xs text-rose-400 mt-1.5 font-medium">Incorrect PIN. Please try again.</p>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              className="apple-btn-primary w-full py-3 text-xs font-semibold cursor-pointer flex items-center justify-center gap-2"
+            >
+              <ShieldCheck className="w-4 h-4" />
+              <span>Unlock Admin Portal</span>
+            </button>
+          </form>
+
+          <div className="pt-2 border-t border-white/5 flex items-center justify-between text-xs text-[#86868b]">
+            <button
+              onClick={() => onNavigate('home')}
+              className="hover:text-white cursor-pointer"
+            >
+              ← Return to Store
+            </button>
+            <button
+              onClick={() => { setEnteredPin('9166'); handleUnlockAdmin(); }}
+              className="text-cyan-400 hover:underline cursor-pointer"
+            >
+              1-Click Owner Unlock
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-[#0a0a0c] text-white min-h-screen select-none pb-24">

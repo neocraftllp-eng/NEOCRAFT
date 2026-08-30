@@ -48,6 +48,7 @@ import AppleContactPage from './components/apple/pages/AppleContactPage';
 import AppleRefundPolicyPage from './components/apple/pages/AppleRefundPolicyPage';
 import AppleTermsPage from './components/apple/pages/AppleTermsPage';
 import AppleAdminDashboard from './components/apple/pages/AppleAdminDashboard';
+import { updatePageSEO } from './utils/seo';
 
 import ReviewsSection from './components/salesEngines/ReviewsSection';
 import VibeMatcherModal from './components/vibeQuiz/VibeMatcherModal';
@@ -144,6 +145,10 @@ export default function App() {
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
+
+  useEffect(() => {
+    updatePageSEO(currentPage);
+  }, [currentPage]);
 
   const handleNavigate = (pageId) => {
     try {

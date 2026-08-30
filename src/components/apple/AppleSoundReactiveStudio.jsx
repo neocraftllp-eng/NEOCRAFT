@@ -70,8 +70,7 @@ export default function AppleSoundReactiveStudio() {
         animationFrameRef.current = requestAnimationFrame(updateMic);
       };
       updateMic();
-    } catch (err) {
-      console.log('Mic access error, falling back to track mode:', err);
+    } catch {
       handleTogglePlay(AUDIO_TRACKS[0]);
     }
   };

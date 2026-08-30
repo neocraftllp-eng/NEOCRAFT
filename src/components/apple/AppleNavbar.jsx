@@ -41,6 +41,8 @@ export default function AppleNavbar({
   onOpenAIGenerator,
   onOpenSizingVisualizer,
   onOpenWishlist,
+  onOpenGSTInvoice,
+  onOpenRealWallUploader,
   onOpenTradePartner,
   onOpenCatalogDownload,
   onOpenVibeQuiz,
@@ -403,6 +405,12 @@ export default function AppleNavbar({
           </button>
           <button onClick={() => { setMobileMenuOpen(false); onOpenSizingVisualizer(); }} className="block w-full text-left py-2 text-[#2997ff] border-b border-[#222]">
             📐 Sign Sizing & Optical Viewing Distance Visualizer
+          </button>
+          <button onClick={() => { setMobileMenuOpen(false); onOpenRealWallUploader(); }} className="block w-full text-left py-2 text-[#2997ff] border-b border-[#222]">
+            📷 Upload Real Wall Photo • Instant AR Visualizer
+          </button>
+          <button onClick={() => { setMobileMenuOpen(false); onOpenGSTInvoice(); }} className="block w-full text-left py-2 text-emerald-400 border-b border-[#222]">
+            📄 Official GST Tax Invoice & Proforma PDF Generator
           </button>
           <button onClick={() => { setMobileMenuOpen(false); onOpenWishlist(); }} className="block w-full text-left py-2 text-pink-300 border-b border-[#222]">
             🎁 Luxury Gift Registry & Shareable Wishlist

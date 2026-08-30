@@ -30,6 +30,8 @@ import AppleColorPsychologyModal from './components/apple/AppleColorPsychologyMo
 import AppleAINeonGeneratorModal from './components/apple/AppleAINeonGeneratorModal';
 import AppleSizingVisualizerModal from './components/apple/AppleSizingVisualizerModal';
 import AppleWishlistModal from './components/apple/AppleWishlistModal';
+import AppleGSTInvoiceModal from './components/apple/AppleGSTInvoiceModal';
+import AppleRealWallUploaderModal from './components/apple/AppleRealWallUploaderModal';
 import AppleCatalogDownloadModal from './components/apple/AppleCatalogDownloadModal';
 import AppleDesignConsultationModal from './components/apple/AppleDesignConsultationModal';
 import AppleTradeInModal from './components/apple/AppleTradeInModal';
@@ -82,6 +84,8 @@ export default function App() {
   const [isAIGeneratorOpen, setIsAIGeneratorOpen] = useState(false);
   const [isSizingVisualizerOpen, setIsSizingVisualizerOpen] = useState(false);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
+  const [isGSTInvoiceOpen, setIsGSTInvoiceOpen] = useState(false);
+  const [isRealWallUploaderOpen, setIsRealWallUploaderOpen] = useState(false);
   const [isTradePartnerOpen, setIsTradePartnerOpen] = useState(false);
   const [isCatalogDownloadOpen, setIsCatalogDownloadOpen] = useState(false);
   const [selectedDetailProduct, setSelectedDetailProduct] = useState(null);
@@ -197,6 +201,8 @@ export default function App() {
         onOpenAIGenerator={() => setIsAIGeneratorOpen(true)}
         onOpenSizingVisualizer={() => setIsSizingVisualizerOpen(true)}
         onOpenWishlist={() => setIsWishlistOpen(true)}
+        onOpenGSTInvoice={() => setIsGSTInvoiceOpen(true)}
+        onOpenRealWallUploader={() => setIsRealWallUploaderOpen(true)}
         onOpenTradePartner={() => setIsTradePartnerOpen(true)}
         onOpenCatalogDownload={() => setIsCatalogDownloadOpen(true)}
         onOpenVibeQuiz={() => setIsVibeQuizOpen(true)}
@@ -839,7 +845,22 @@ export default function App() {
         selectedCurrency={selectedCurrency}
       />
 
-      {/* 23. Apple Floating VIP Concierge Widget */}
+      {/* 23. Official GST Proforma Tax Invoice & PDF Generator Modal */}
+      <AppleGSTInvoiceModal
+        isOpen={isGSTInvoiceOpen}
+        onClose={() => setIsGSTInvoiceOpen(false)}
+        selectedCurrency={selectedCurrency}
+      />
+
+      {/* 24. Real Wall Photo Upload AR Visualizer Modal */}
+      <AppleRealWallUploaderModal
+        isOpen={isRealWallUploaderOpen}
+        onClose={() => setIsRealWallUploaderOpen(false)}
+        onAddToCart={handleAddToCart}
+        selectedCurrency={selectedCurrency}
+      />
+
+      {/* 25. Apple Floating VIP Concierge Widget */}
       <AppleLiveConcierge
         onNavigate={handleNavigate}
         onOpenConsultation={() => setIsConsultationOpen(true)}

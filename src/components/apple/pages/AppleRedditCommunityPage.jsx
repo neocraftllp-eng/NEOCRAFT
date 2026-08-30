@@ -202,7 +202,7 @@ export default function AppleRedditCommunityPage({
     });
 
   return (
-    <div className="min-h-screen bg-[#070709] text-white pt-24 pb-20 font-sans selection:bg-[#2997ff]/30">
+    <div className="min-h-screen bg-[#070709] text-white pt-4 pb-20 font-sans selection:bg-[#2997ff]/30">
       
       {/* Header Banner */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 mb-8">

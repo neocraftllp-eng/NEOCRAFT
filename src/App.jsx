@@ -251,7 +251,7 @@ export default function App() {
       />
 
       {/* 2. Main Dedicated View / Page Switcher */}
-      <main className="flex-1">
+      <main className={`flex-1 ${currentPage === 'home' ? '' : 'pt-28 sm:pt-32'}`}>
         
         {/* ================= PAGE: HOME / MAIN STORE ================= */}
         {currentPage === 'home' && (

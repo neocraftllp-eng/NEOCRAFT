@@ -342,8 +342,8 @@ export default function AppleCheckoutModal({
                 </span>
                 <div className="grid grid-cols-3 sm:grid-cols-7 gap-1.5">
                   {[
-                    { id: 'dodo', label: 'Dodo Pay', icon: '🦤', badge: 'Global' },
-                    { id: 'upi', label: 'UPI / QR', icon: '⚡' },
+                    { id: 'razorpay', label: 'Razorpay', icon: '⚡', badge: 'Live' },
+                    { id: 'upi', label: 'UPI / QR', icon: '📱' },
                     { id: 'card', label: 'Cards', icon: '💳' },
                     { id: 'applepay', label: 'Apple Pay', icon: '🍎' },
                     { id: 'netbanking', label: 'NetBanking', icon: '🏛️' },
@@ -367,80 +367,91 @@ export default function AppleCheckoutModal({
                 </div>
               </div>
 
-              {/* Gateway Tab 0: Dodo Payments (Global & Multi-Currency) */}
-              {paymentGateway === 'dodo' && (
-                <div className="p-5 rounded-2xl bg-gradient-to-br from-[#1c1824] to-[#121214] border border-[#ff6b00]/40 space-y-4">
+              {/* Gateway Tab 0: Razorpay Official Multi-Option Gateway */}
+              {paymentGateway === 'razorpay' && (
+                <div className="p-5 rounded-2xl bg-gradient-to-br from-[#0c1f38] to-[#121218] border border-[#2997ff]/40 space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="text-2xl">🦤</span>
+                      <span className="text-2xl">⚡</span>
                       <div>
                         <div className="font-bold text-white text-xs flex items-center gap-1.5">
-                          <span>Dodo Payments Global Checkout</span>
-                          <span className="px-1.5 py-0.5 rounded-full bg-[#ff6b00]/20 text-[#ff8c38] text-[9px] font-bold uppercase">
-                            Global MoR
+                          <span>Razorpay India & Global Gateway</span>
+                          <span className="px-1.5 py-0.5 rounded-full bg-[#2997ff]/20 text-[#2997ff] text-[9px] font-bold uppercase">
+                            256-Bit SSL
                           </span>
                         </div>
-                        <span className="text-[10px] text-[#86868b]">Instant multi-currency conversion in USD, EUR, GBP, AED, INR</span>
+                        <span className="text-[10px] text-[#86868b]">All UPI Apps, Credit/Debit Cards, NetBanking, CRED, and PayLater</span>
                       </div>
                     </div>
 
                     <div className="text-right font-mono text-xs text-emerald-400 font-bold">
-                      Zero Forex Surcharge
+                      Zero Processing Fee
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-[11px]">
                     <div className="p-2.5 rounded-xl bg-black/50 border border-white/10 text-center">
-                      <div className="font-bold text-white">Global Cards</div>
-                      <div className="text-[9px] text-[#86868b]">Visa, MC, Amex, JCB</div>
+                      <div className="font-bold text-white">Google Pay / PhonePe</div>
+                      <div className="text-[9px] text-[#86868b]">Instant 1-Tap UPI</div>
                     </div>
                     <div className="p-2.5 rounded-xl bg-black/50 border border-white/10 text-center">
-                      <div className="font-bold text-white">Apple / Google Pay</div>
-                      <div className="text-[9px] text-[#86868b]">Biometric 1-Click</div>
+                      <div className="font-bold text-white">All Major Cards</div>
+                      <div className="text-[9px] text-[#86868b]">Visa, Mastercard, RuPay</div>
                     </div>
                     <div className="p-2.5 rounded-xl bg-black/50 border border-white/10 text-center">
-                      <div className="font-bold text-white">PayPal & SEPA</div>
-                      <div className="text-[9px] text-[#86868b]">Europe & US Direct</div>
+                      <div className="font-bold text-white">50+ NetBanking</div>
+                      <div className="text-[9px] text-[#86868b]">HDFC, ICICI, SBI, Axis</div>
                     </div>
                     <div className="p-2.5 rounded-xl bg-black/50 border border-white/10 text-center">
-                      <div className="font-bold text-white">India UPI / QR</div>
-                      <div className="text-[9px] text-[#86868b]">Instant PhonePe/GPay</div>
+                      <div className="font-bold text-white">No-Cost EMI</div>
+                      <div className="text-[9px] text-[#86868b]">3, 6, 9 Months @ 0%</div>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Gateway Tab 1: UPI & Dynamic QR */}
+              {/* Gateway Tab 1: Live Dynamic UPI & QR Code */}
               {paymentGateway === 'upi' && (
                 <div className="p-5 rounded-2xl bg-[#121214] border border-[#222225] space-y-4">
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-                    {/* Simulated Real QR */}
+                    {/* Live Dynamic QR Code */}
                     <div className="p-3 bg-white rounded-2xl shadow-xl flex flex-col items-center justify-center shrink-0">
-                      <QrCode className="w-32 h-32 text-black" />
-                      <span className="text-[10px] font-mono font-bold text-slate-900 mt-1">Scan with any UPI App</span>
+                      <img 
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(`upi://pay?pa=9166691274@okbizaxis&pn=NEOCRAFT%20STUDIO&am=${finalTotal}&cu=INR&tn=NEOCRAFT-Order`)}&margin=1`}
+                        alt="NEOCRAFT UPI QR Code"
+                        className="w-32 h-32 rounded-lg"
+                      />
+                      <span className="text-[9px] font-mono font-bold text-slate-900 mt-1">Scan with GPay / PhonePe / Paytm</span>
                     </div>
 
                     <div className="space-y-3 w-full">
                       <div className="space-y-1">
-                        <span className="text-[11px] text-[#86868b] block font-medium">Or enter your VPA / UPI ID:</span>
-                        <div className="flex gap-2">
-                          <input
-                            type="text"
-                            value={upiId}
-                            onChange={(e) => setUpiId(e.target.value)}
-                            placeholder="username@okhdfcbank"
-                            className="flex-1 px-3 py-2 bg-[#18181b] border border-[#2d2d30] rounded-xl text-white text-xs font-mono focus:outline-none focus:border-emerald-400"
-                          />
+                        <span className="text-[11px] text-[#86868b] block font-medium">NEOCRAFT Verified Merchant UPI ID:</span>
+                        <div className="p-2.5 bg-[#18181b] border border-[#2d2d30] rounded-xl text-emerald-400 font-mono text-xs flex items-center justify-between">
+                          <span>9166691274@okbizaxis</span>
+                          <span className="text-[10px] text-[#86868b]">Verified Merchant</span>
                         </div>
                       </div>
 
-                      {/* Quick UPI App Icons */}
-                      <div className="flex items-center gap-2 pt-1">
-                        {['Google Pay', 'PhonePe', 'Paytm', 'CRED'].map((app) => (
-                          <span key={app} className="px-2 py-1 bg-[#1c1c20] border border-white/10 rounded-lg text-[10px] text-white">
-                            {app}
-                          </span>
-                        ))}
+                      {/* 1-Click Quick UPI App Triggers */}
+                      <div className="space-y-1">
+                        <span className="text-[10px] text-[#86868b] block">1-Click Fast Mobile Checkout:</span>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                          {[
+                            { name: 'Google Pay', color: 'border-[#4285F4]/30 hover:bg-[#4285F4]/20' },
+                            { name: 'PhonePe', color: 'border-[#5f259f]/30 hover:bg-[#5f259f]/20' },
+                            { name: 'Paytm', color: 'border-[#00b9f5]/30 hover:bg-[#00b9f5]/20' },
+                            { name: 'CRED', color: 'border-white/30 hover:bg-white/20' }
+                          ].map((app) => (
+                            <a
+                              key={app.name}
+                              href={`upi://pay?pa=9166691274@okbizaxis&pn=NEOCRAFT%20STUDIO&am=${finalTotal}&cu=INR&tn=NEOCRAFT-Order`}
+                              className={`px-2 py-1.5 bg-[#1c1c20] border ${app.color} rounded-lg text-[10px] text-white font-semibold text-center block transition-all cursor-pointer`}
+                            >
+                              {app.name} ➔
+                            </a>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>

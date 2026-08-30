@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, 
   TrendingUp, 
@@ -20,10 +20,24 @@ import {
   ShieldCheck,
   Tag,
   ArrowUpRight,
-  Zap
+  Zap,
+  Bot,
+  Trash2,
+  Play,
+  Pause,
+  RefreshCw
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { playClickSound, playChimeSound } from '../../../audio/soundEffects';
+import { 
+  getStoredCommunityPosts, 
+  saveCommunityPosts, 
+  triggerAIBatchNow, 
+  deleteCommunityPost, 
+  getAutoPostingStatus, 
+  setAutoPostingStatus, 
+  getLastAIBotRunTime 
+} from '../../../services/communityStorage';
 
 const INITIAL_ORDERS = [
   {
@@ -120,6 +134,47 @@ export default function AppleAdminDashboard({
     { code: 'ARCH25', discount: '25%', uses: 89, status: 'Active (Trade Only)' },
     { code: 'VIPBOTTLE20', discount: '20%', uses: 34, status: 'Active' }
   ]);
+
+  // AI Community Bot State
+  const [communityPosts, setCommunityPosts] = useState(getStoredCommunityPosts);
+  const [isBotEnabled, setIsBotEnabled] = useState(getAutoPostingStatus);
+  const [lastBotRun, setLastBotRun] = useState(getLastAIBotRunTime);
+  const [isGeneratingBatch, setIsGeneratingBatch] = useState(false);
+
+  useEffect(() => {
+    const handleSync = () => {
+      setCommunityPosts(getStoredCommunityPosts());
+      setIsBotEnabled(getAutoPostingStatus());
+      setLastBotRun(getLastAIBotRunTime());
+    };
+    window.addEventListener('neocraft_community_updated', handleSync);
+    return () => window.removeEventListener('neocraft_community_updated', handleSync);
+  }, []);
+
+  const handleTriggerAIBatch = (count = 10) => {
+    playChimeSound();
+    setIsGeneratingBatch(true);
+    setTimeout(() => {
+      const updated = triggerAIBatchNow(count);
+      setCommunityPosts(updated);
+      setLastBotRun(new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }));
+      setIsGeneratingBatch(false);
+      confetti({ particleCount: 60, spread: 70 });
+    }, 600);
+  };
+
+  const handleToggleBot = () => {
+    playClickSound();
+    const next = !isBotEnabled;
+    setIsBotEnabled(next);
+    setAutoPostingStatus(next);
+  };
+
+  const handleDeletePost = (id) => {
+    playClickSound();
+    const updated = deleteCommunityPost(id);
+    setCommunityPosts(updated);
+  };
 
   const handleUnlockAdmin = (e) => {
     if (e) e.preventDefault();
@@ -319,6 +374,7 @@ export default function AppleAdminDashboard({
           {[
             { id: 'orders', label: '📦 Production & Order Pipeline', count: orders.length },
             { id: 'trade', label: '🏛️ Architect Trade Applications', count: tradeApps.filter(t => t.status === 'pending').length },
+            { id: 'community-bot', label: '🤖 AI Community Auto-Post Bot', count: communityPosts.length },
             { id: 'inventory', label: '🔬 Raw Material & Component Stock' },
             { id: 'promos', label: '🏷️ Discount Codes & Campaigns', count: activePromos.length }
           ].map((tab) => (
@@ -590,6 +646,160 @@ export default function AppleAdminDashboard({
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+
+          </section>
+        )}
+
+        {/* ================= TAB 5: AI COMMUNITY AUTO-POST BOT ================= */}
+        {activeTab === 'community-bot' && (
+          <section className="space-y-6">
+            
+            {/* Bot Control & Status Card */}
+            <div className="apple-card p-6 border border-[#262629] space-y-6">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-white/10 pb-6">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Bot className="w-5 h-5 text-[#ff4500]" />
+                    <h3 className="font-bold text-base text-white">AI Autonomous Community Poster</h3>
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono ${
+                      isBotEnabled ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                    }`}>
+                      {isBotEnabled ? '● AUTO-POSTING ACTIVE (10 POSTS / HR)' : '○ BOT PAUSED'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#86868b]">
+                    Generates viral neon setup posts, hashtag optimization, realistic customer handles, starting upvotes, and simulated comment discussions.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2.5 w-full md:w-auto">
+                  <button
+                    onClick={handleToggleBot}
+                    className={`px-4 py-2.5 rounded-xl text-xs font-bold cursor-pointer flex items-center justify-center gap-1.5 transition-all flex-1 md:flex-initial ${
+                      isBotEnabled 
+                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30' 
+                        : 'bg-emerald-600 text-white hover:bg-emerald-500'
+                    }`}
+                  >
+                    {isBotEnabled ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                    <span>{isBotEnabled ? 'Pause Auto-Posting' : 'Resume Auto-Posting'}</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleTriggerAIBatch(10)}
+                    disabled={isGeneratingBatch}
+                    className="apple-btn-primary px-5 py-2.5 text-xs font-bold cursor-pointer flex items-center justify-center gap-2 flex-1 md:flex-initial shadow-lg shadow-[#ff4500]/20 bg-gradient-to-r from-[#ff4500] to-[#ff7b00]"
+                  >
+                    <Zap className={`w-4 h-4 ${isGeneratingBatch ? 'animate-spin' : ''}`} />
+                    <span>{isGeneratingBatch ? 'Generating 10 AI Posts...' : '⚡ Generate 10 Posts Now'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Bot Stats Overview */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+                <div className="p-4 rounded-2xl bg-[#111114] border border-[#222226]">
+                  <span className="text-[#86868b] text-[11px]">Total Community Posts</span>
+                  <div className="text-xl font-bold text-white font-mono mt-1">{communityPosts.length}</div>
+                </div>
+                <div className="p-4 rounded-2xl bg-[#111114] border border-[#222226]">
+                  <span className="text-[#86868b] text-[11px]">Total Karma Generated</span>
+                  <div className="text-xl font-bold text-[#ff4500] font-mono mt-1">
+                    {communityPosts.reduce((acc, p) => acc + (p.upvotes || 0), 0).toLocaleString('en-IN')} ▲
+                  </div>
+                </div>
+                <div className="p-4 rounded-2xl bg-[#111114] border border-[#222226]">
+                  <span className="text-[#86868b] text-[11px]">Hourly Schedule Target</span>
+                  <div className="text-xl font-bold text-[#2997ff] font-mono mt-1">10 Posts / Hr</div>
+                </div>
+                <div className="p-4 rounded-2xl bg-[#111114] border border-[#222226]">
+                  <span className="text-[#86868b] text-[11px]">Last AI Batch Trigger</span>
+                  <div className="text-sm font-semibold text-emerald-400 font-mono mt-1.5 truncate">{lastBotRun}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Live Community Feed Management Table */}
+            <div className="apple-card p-6 border border-[#262629] space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="font-semibold text-sm text-white flex items-center gap-2">
+                  <span>Live Community Posts ({communityPosts.length})</span>
+                  <span className="text-[11px] text-[#86868b] font-normal">• Synced Real-Time with Storefront</span>
+                </h4>
+
+                <button
+                  onClick={() => { playClickSound(); onNavigate('community'); }}
+                  className="text-xs text-[#2997ff] hover:underline cursor-pointer flex items-center gap-1"
+                >
+                  <span>View Live r/Community Page ➔</span>
+                </button>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-[#222225] text-[#86868b] uppercase text-[10px] tracking-wider font-bold">
+                      <th className="py-3 px-3">Post / Media</th>
+                      <th className="py-3 px-3">Subreddit</th>
+                      <th className="py-3 px-3">Author</th>
+                      <th className="py-3 px-3">Hashtags</th>
+                      <th className="py-3 px-3 text-center">Karma ▲</th>
+                      <th className="py-3 px-3 text-center">Comments</th>
+                      <th className="py-3 px-3 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#222225]">
+                    {communityPosts.map((post) => (
+                      <tr key={post.id} className="hover:bg-white/[0.02]">
+                        <td className="py-3.5 px-3">
+                          <div className="flex items-center gap-3">
+                            <img 
+                              src={post.imageUrl} 
+                              alt="thumbnail" 
+                              className="w-12 h-12 rounded-xl object-cover border border-[#333] shrink-0" 
+                            />
+                            <div className="space-y-0.5 max-w-xs sm:max-w-sm">
+                              <div className="font-semibold text-white truncate text-xs">{post.title}</div>
+                              <div className="text-[10px] text-[#86868b] truncate">{post.content}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-3">
+                          <span className="px-2 py-0.5 rounded-md bg-[#2997ff]/15 text-[#2997ff] text-[10px] font-bold">
+                            {post.subreddit}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-3">
+                          <span className="font-mono text-slate-200">{post.author}</span>
+                        </td>
+                        <td className="py-3.5 px-3">
+                          <div className="flex flex-wrap gap-1 max-w-[140px]">
+                            {(post.hashtags || ['#CustomNeon']).slice(0, 2).map((h, i) => (
+                              <span key={i} className="text-[9px] text-[#ff4500] font-mono">{h}</span>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-3 text-center font-mono font-bold text-[#ff4500]">
+                          {post.upvotes}
+                        </td>
+                        <td className="py-3.5 px-3 text-center font-mono text-slate-300">
+                          {post.commentsCount || 0}
+                        </td>
+                        <td className="py-3.5 px-3 text-right">
+                          <button
+                            onClick={() => handleDeletePost(post.id)}
+                            className="p-1.5 rounded-lg text-[#86868b] hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
+                            title="Delete Post"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
 

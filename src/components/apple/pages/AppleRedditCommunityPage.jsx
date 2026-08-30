@@ -27,6 +27,13 @@ import confetti from 'canvas-confetti';
 import { playClickSound, playChimeSound } from '../../../audio/soundEffects';
 import { formatPrice } from '../../../utils/pricing';
 
+import { 
+  getStoredCommunityPosts, 
+  saveCommunityPosts, 
+  triggerAIBatchNow, 
+  getAutoPostingStatus 
+} from '../../../services/communityStorage';
+
 export default function AppleRedditCommunityPage({
   onNavigate,
   onAddToCart,
@@ -44,95 +51,30 @@ export default function AppleRedditCommunityPage({
   const [newImageUrl, setNewImageUrl] = useState('');
   const [newAuthor, setNewAuthor] = useState('You (Verified Buyer)');
 
-  // Feed Posts Data with Reddit-style Upvotes & Comments
-  const [posts, setPosts] = useState([
-    {
-      id: 'post-1',
-      subreddit: 'r/RoomSetups',
-      author: 'u/Rohan_Cyberpunk',
-      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80',
-      timeAgo: '2 hours ago',
-      isVerifiedBuyer: true,
-      title: 'Finally installed my "NEVER SLEEP" 120cm Cyber Cyan sign above my desk! The wall glow is insane ✨',
-      content: 'Ordered last Thursday and got it in 4 days with the heavy-duty standoff kit. The remote dimmer lets me drop it to 10% brightness when gaming at night. What do you guys think?',
-      imageUrl: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=1000&q=80',
-      upvotes: 482,
-      userVote: 1, // 1 for upvoted, -1 for downvoted, 0 for neutral
-      commentsCount: 34,
-      linkedProduct: {
-        name: 'Custom Neon "NEVER SLEEP" (120cm • Cyber Cyan)',
-        price: 8999
-      },
-      comments: [
-        {
-          id: 'c1',
-          author: 'u/Priya_Designer',
-          avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&q=80',
-          timeAgo: '1 hour ago',
-          text: 'The acrylic laser cut line is so clean! Did you use screws or the 3M tape?',
-          upvotes: 28,
-          isVerified: true
-        },
-        {
-          id: 'c2',
-          author: 'u/Rohan_Cyberpunk',
-          avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80',
-          timeAgo: '45 mins ago',
-          text: 'Used the stainless steel standoffs included in the box! Took about 10 minutes with a drill.',
-          upvotes: 14,
-          isOP: true
-        }
-      ]
-    },
-    {
-      id: 'post-2',
-      subreddit: 'r/CafeAndClubs',
-      author: 'u/TheSocialBistro',
-      avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=120&q=80',
-      timeAgo: '5 hours ago',
-      isVerifiedBuyer: true,
-      title: 'Our new cafe aesthetic corner in Koramangala, Bangalore. Customers take 50+ reels here daily ☕✨',
-      content: 'Wanted to share our 2-piece warm gold "GOOD VIBES ONLY & ESPRESSO" installation. The 12V solid-state efficiency keeps our electricity bill almost zero for 14 hours straight.',
-      imageUrl: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=1000&q=80',
-      upvotes: 819,
-      userVote: 0,
-      commentsCount: 52,
-      linkedProduct: {
-        name: 'Cafe Custom Script Neon Sign (Warm Amber Gold)',
-        price: 11499
-      },
-      comments: [
-        {
-          id: 'c3',
-          author: 'u/Arjun_K',
-          avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80',
-          timeAgo: '3 hours ago',
-          text: 'Visiting this weekend! The warm gold kelvin matches your wooden aesthetic perfectly.',
-          upvotes: 19,
-          isVerified: false
-        }
-      ]
-    },
-    {
-      id: 'post-3',
-      subreddit: 'r/SpiritualArt',
-      author: 'u/Aarav_LuxuryLiving',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=120&q=80',
-      timeAgo: '1 day ago',
-      isVerifiedBuyer: true,
-      title: '3-Piece Triptych Mahadev Shiva canvas arrived! The 300 DPI texture and gold foil look museum-grade',
-      content: 'Sharing a quick unboxing shot of the 150cm panoramic canvas. The floating black aluminum frame makes it look like it is floating off the wall. Highly recommend the 5-piece option if you have a wide living room wall.',
-      imageUrl: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=1000&q=80',
-      upvotes: 1240,
-      userVote: 0,
-      commentsCount: 89,
-      linkedProduct: {
-        name: 'Mahadev Shiva Museum Textured Giclée Canvas (3-Piece Split)',
-        price: 8999
-      },
-      comments: []
-    }
-  ]);
+  // Feed Posts Data with Live Storage Sync
+  const [posts, setPosts] = useState(getStoredCommunityPosts);
+
+  useEffect(() => {
+    const handleSync = () => {
+      setPosts(getStoredCommunityPosts());
+    };
+    window.addEventListener('neocraft_community_updated', handleSync);
+    return () => window.removeEventListener('neocraft_community_updated', handleSync);
+  }, []);
+
+  // Background Auto AI Post Interval (If enabled)
+  useEffect(() => {
+    if (!getAutoPostingStatus()) return;
+    
+    // Periodically generate 1 new post in background every 15-30 minutes of browsing
+    const timer = setInterval(() => {
+      if (getAutoPostingStatus()) {
+        triggerAIBatchNow(1);
+      }
+    }, 1000 * 60 * 15); // 15 mins
+
+    return () => clearInterval(timer);
+  }, []);
 
   // Comment input state per post
   const [commentInputs, setCommentInputs] = useState({});
@@ -150,7 +92,7 @@ export default function AppleRedditCommunityPage({
   // Upvote / Downvote Handler
   const handleVote = (postId, direction) => {
     playClickSound();
-    setPosts(prev => prev.map(p => {
+    const updated = posts.map(p => {
       if (p.id !== postId) return p;
       let newVote = 0;
       let diff = 0;
@@ -162,7 +104,7 @@ export default function AppleRedditCommunityPage({
       } else {
         // New vote
         newVote = direction;
-        diff = direction - p.userVote;
+        diff = direction - (p.userVote || 0);
       }
 
       return {
@@ -170,7 +112,9 @@ export default function AppleRedditCommunityPage({
         userVote: newVote,
         upvotes: p.upvotes + diff
       };
-    }));
+    });
+    setPosts(updated);
+    saveCommunityPosts(updated);
   };
 
   // Add Comment to Post
@@ -189,15 +133,16 @@ export default function AppleRedditCommunityPage({
       isVerified: true
     };
 
-    setPosts(prev => prev.map(p => {
+    const updated = posts.map(p => {
       if (p.id !== postId) return p;
       return {
         ...p,
-        commentsCount: p.commentsCount + 1,
+        commentsCount: (p.commentsCount || 0) + 1,
         comments: [newComment, ...(p.comments || [])]
       };
-    }));
-
+    });
+    setPosts(updated);
+    saveCommunityPosts(updated);
     setCommentInputs(prev => ({ ...prev, [postId]: '' }));
   };
 
@@ -219,13 +164,17 @@ export default function AppleRedditCommunityPage({
       title: newTitle,
       content: newContent,
       imageUrl: newImageUrl || 'https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=1000&q=80',
+      hashtags: ['#CustomNeon', '#NEOCRAFT', '#AestheticSetup'],
       upvotes: 1,
       userVote: 1,
       commentsCount: 0,
-      comments: []
+      comments: [],
+      createdAt: new Date().toISOString()
     };
 
-    setPosts([createdPost, ...posts]);
+    const updated = [createdPost, ...posts];
+    setPosts(updated);
+    saveCommunityPosts(updated);
     setIsCreateModalOpen(false);
     setNewTitle('');
     setNewContent('');
